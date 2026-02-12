@@ -86,7 +86,7 @@ export type InventoryAvailability = "ATS" | "Prebook" | "Third party" | "Packed"
 
 export type ShippingTerms = "FOB" | "EXW";
 
-export type LeadTimeInterval = "Days" | "Weeks" | "Months";
+export type LeadTimeInterval = "Hour(s)" | "Day(s)" | "Week(s)" | "Month(s)";
 
 export type ItemizationType = "Standard" | "Lightning Lot";
 

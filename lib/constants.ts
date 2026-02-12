@@ -146,7 +146,7 @@ export const FOB_EXW_OPTIONS: RadioOption[] = [
   { value: "EXW", label: "EXW" },
 ];
 
-export const LEAD_TIME_INTERVAL_OPTIONS: LeadTimeInterval[] = ["Days", "Weeks", "Months"];
+export const LEAD_TIME_INTERVAL_OPTIONS: string[] = ["Hour(s)", "Day(s)", "Week(s)", "Month(s)"];
 
 // ─── Section 6: Qualification ─────────────────────────────────────────────────
 
@@ -158,7 +158,7 @@ export const ITEMIZATION_TYPE_OPTIONS: RadioOption[] = [
 // ─── Section 7: Pricing ───────────────────────────────────────────────────────
 
 export const CURRENCY_TYPE_OPTIONS = [
-  "USD $", "EUR €", "GBP £", "CAD $", "AUD $",
+  "USD $", "EUR €", "GBP £", "JPY ¥", "KRW ₩", "CAD", "AUD", "UAE", "CNY", "PLN", "CHF",
 ];
 
 export const INLAND_FREIGHT_OPTIONS: RadioOption[] = [
@@ -308,3 +308,67 @@ export const AIRTABLE_FIELD_MAP: Partial<Record<keyof ItemizationFormData, strin
   p0FireListing: "P0 Fire Listing?",
   notes: "Notes",
 };
+
+// ─── Multi-Select Options (from Airtable metadata) ───────────────────────────
+
+export const TAG_PRESET_OPTIONS = [
+  "Assorted Beauty",
+  "Multibrand Luxury Assortment",
+  "Retailer Beauty",
+  "Wholesale Domestic",
+  "Wholesale International",
+];
+
+export const BUYER_TYPE_OPTIONS = [
+  "Amazon / Walmart seller",
+  "Bin store",
+  "Brand",
+  "Brick and mortar",
+  "Distributor",
+  "Ghost agent",
+  "Jobber",
+  "Liquidator",
+  "Liveseller",
+  "Online",
+  "Other",
+  "Reseller",
+  "Retailer",
+  "Subscription box",
+  "Wholesale",
+];
+
+export const COUNTRY_OPTIONS = [
+  "United States", "Afghanistan", "Albania", "Algeria", "Andorra", "Angola",
+  "Antigua and Barbuda", "Argentina", "Armenia", "Aruba", "Australia", "Austria",
+  "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus",
+  "Belgium", "Belize", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil",
+  "Brunei", "Bulgaria", "Cambodia", "Cameroon", "Canada", "Cayman Islands",
+  "Chile", "China", "Colombia", "Congo", "Costa Rica", "Croatia", "Cuba",
+  "Cyprus", "Czech Republic", "Denmark", "Dominican Republic", "Ecuador", "Egypt",
+  "El Salvador", "Estonia", "Faroe Islands", "Finland", "France", "French Polynesia",
+  "Gabon", "Georgia", "Germany", "Ghana", "Greece", "Greenland", "Guadeloupe",
+  "Guam", "Guatemala", "Guinea", "Haiti", "Honduras", "Hong Kong", "Hungary",
+  "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Isle of Man",
+  "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya",
+  "Kosovo", "Kuwait", "Latvia", "Lebanon", "Libya", "Liechtenstein", "Luxembourg",
+  "Macedonia", "Madagascar", "Malaysia", "Malta", "Martinique", "Mauritius",
+  "Mayotte", "Mexico", "Mongolia", "Montenegro", "Morocco", "Mozambique",
+  "Myanmar (Burma)", "Namibia", "Nepal", "Netherlands", "New Caledonia",
+  "New Zealand", "Nicaragua", "Nigeria", "Norway", "Oman", "Pakistan",
+  "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines",
+  "Poland", "Portugal", "Puerto Rico", "Republic of Korea", "Republic of Lithuania",
+  "Republic of Moldova", "Romania", "Russia", "San Marino", "Saudi Arabia",
+  "Senegal", "Serbia", "Singapore", "Slovakia", "Slovenia", "South Africa",
+  "Spain", "Sri Lanka", "St. Lucia", "Sudan", "Suriname", "Swaziland", "Sweden",
+  "Switzerland", "Taiwan", "Tanzania", "Thailand", "Trinidad and Tobago", "Tunisia",
+  "Turkey", "U.S. Virgin Islands", "Ukraine", "United Arab Emirates",
+  "United Kingdom", "Uruguay", "Venezuela", "Vietnam", "Zambia", "Zimbabwe",
+];
+
+export const US_STATE_OPTIONS = [
+  "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA", "HI", "ID",
+  "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD", "MA", "MI", "MN", "MS",
+  "MO", "MT", "NE", "NV", "NH", "NJ", "NM", "NY", "NC", "ND", "OH", "OK",
+  "OR", "PA", "RI", "SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV",
+  "WI", "WY", "N/A",
+];

@@ -7,10 +7,7 @@ export interface LinkedRecordConfig {
 }
 
 export const LINKED_RECORD_FIELDS: Partial<Record<FormFieldName, LinkedRecordConfig>> = {
-  brandPartner: { table: "Brand Partners", displayField: "Name", mode: "single" },
-  seller: { table: "Sellers", displayField: "Name", mode: "single" },
-  tagPresets: { table: "Tags", displayField: "Name", mode: "multi" },
-  restrictionsCompany: { table: "Companies", displayField: "Name", mode: "multi" },
-  restrictionsBuyerType: { table: "Buyer Types", displayField: "Name", mode: "multi" },
-  restrictionsRegion: { table: "Regions", displayField: "Name", mode: "multi" },
+  brandPartner: { table: "Admins", displayField: "Name", mode: "single" },
+  seller: { table: "Sellers", displayField: "Seller", mode: "single" },
+  restrictionsCompany: { table: "Companies", displayField: "ID", mode: "multi" },
 };

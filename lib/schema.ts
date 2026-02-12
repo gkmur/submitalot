@@ -54,7 +54,7 @@ export const itemizationSchema = z.object({
   inventoryAvailability: z.string().min(1, "Inventory availability is required"),
   fobOrExw: z.enum(["FOB", "EXW"], { required_error: "Select FOB or EXW" }),
   leadTimeNumber: z.number().min(0),
-  leadTimeInterval: z.enum(["Days", "Weeks", "Months"]),
+  leadTimeInterval: z.enum(["Hour(s)", "Day(s)", "Week(s)", "Month(s)"]),
 
   // Section 6: Qualification
   itemizationType: z.enum(["Standard", "Lightning Lot"]),
