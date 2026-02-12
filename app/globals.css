@@ -369,6 +369,89 @@ body {
   cursor: not-allowed;
 }
 
+/* ─── Linked Record Picker ─────────────────────── */
+
+.picker-wrapper {
+  position: relative;
+}
+
+.picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  max-height: 240px;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-top: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.picker-item {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 0.85rem;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.1s;
+}
+
+.picker-item:hover {
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.picker-loading,
+.picker-empty {
+  color: var(--text-muted);
+  cursor: default;
+}
+
+.picker-empty:hover,
+.picker-loading:hover {
+  background: none;
+}
+
+.selected-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+
+.selected-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.6rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  color: var(--text);
+}
+
+.selected-pill button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+  line-height: 1;
+}
+
+.selected-pill button:hover {
+  color: var(--error);
+}
+
 /* ─── Conditional Transitions ──────────────────── */
 
 .conditional-enter {
