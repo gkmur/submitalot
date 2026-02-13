@@ -73,6 +73,7 @@ export function getFieldsToClear(
     if (newValue === "Wholesale") {
       return [...SURPLUS_FIELDS];
     }
+    return [...SURPLUS_FIELDS, ...WHOLESALE_FIELDS];
   }
 
   if (changedField === "seller" && newValue !== "NEW SELLER - GHOST TEMP") {

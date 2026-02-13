@@ -1,24 +1,26 @@
 :root {
-  --bg: #0a0a0c;
-  --bg-surface: #141418;
-  --bg-elevated: #1c1c22;
-  --bg-input: #1a1a20;
-  --border: #2a2a32;
-  --border-focus: #6366f1;
-  --text: #e4e4e7;
-  --text-muted: #71717a;
-  --text-label: #a1a1aa;
-  --accent: #6366f1;
-  --accent-hover: #818cf8;
-  --error: #ef4444;
-  --success: #22c55e;
+  --bg: #edf1f4;
+  --bg-surface: #f4f7f8;
+  --bg-elevated: #ffffff;
+  --bg-input: #ffffff;
+  --border: #c7c7c7;
+  --border-focus: #564ef5;
+  --text: #0d0135;
+  --text-muted: #576f80;
+  --text-label: #576f80;
+  --accent: #564ef5;
+  --accent-hover: #7958e8;
+  --error: #b42318;
+  --success: #8cb05a;
+  --brand-lime: #c8f190;
+  --brand-ink: #0d0135;
 
-  --radius: 8px;
-  --radius-lg: 12px;
-  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --radius: 12px;
+  --radius-lg: 18px;
+  --font-sans: "Avenir Next", "TWK Lausanne", "Suisse Intl", "Helvetica Neue", "Segoe UI", sans-serif;
   --font-mono: "SF Mono", "Fira Code", monospace;
-  --max-width: 960px;
-  --sidebar-width: 220px;
+  --max-width: 1120px;
+  --sidebar-width: 240px;
 }
 
 *,
@@ -36,7 +38,9 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background: var(--bg);
+  background:
+    radial-gradient(68rem 32rem at 100% -20%, color-mix(in srgb, var(--brand-lime) 48%, transparent), transparent 70%),
+    linear-gradient(180deg, #f4f7f8 0%, var(--bg) 58%, #effbde 100%);
   color: var(--text);
   line-height: 1.6;
   min-height: 100dvh;
@@ -47,23 +51,70 @@ body {
 .form-container {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 3rem 1.5rem 6rem;
+  padding: 2.5rem 1.5rem 6rem;
 }
 
 .form-header {
-  margin-bottom: 3rem;
+  margin-bottom: 1.6rem;
+}
+
+.brand-subhead {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted);
+  margin-bottom: 0.55rem;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+.ghost-mark {
+  width: 2.3rem;
+  height: 2.3rem;
+  display: block;
+}
+
+.ghost-mark-solid {
+  fill: var(--accent);
+}
+
+.ghost-mark-cutout {
+  fill: var(--bg-surface);
+}
+
+.brand-wordmark {
+  font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  font-weight: 650;
+  color: var(--brand-ink);
 }
 
 .form-header h1 {
-  font-size: 1.75rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
+  max-width: 19ch;
+  font-size: clamp(2rem, 5vw, 4.2rem);
+  line-height: 0.92;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  margin-bottom: 0.85rem;
 }
 
 .form-header p {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  max-width: 52ch;
+  font-size: clamp(0.96rem, 1.5vw, 1.18rem);
+  line-height: 1.45;
+}
+
+.form-header .brand-subhead {
+  max-width: none;
+  font-size: 0.75rem;
+  line-height: 1.2;
 }
 
 /* ─── Sections ─────────────────────────────────── */
@@ -382,7 +433,7 @@ body {
 .file-drop:hover,
 .file-drop.dragging {
   border-color: var(--accent);
-  background: rgba(99, 102, 241, 0.05);
+  background: color-mix(in srgb, var(--accent) 8%, white);
 }
 
 .file-drop p {
@@ -481,7 +532,7 @@ body {
 }
 
 .picker-item:hover {
-  background: rgba(99, 102, 241, 0.12);
+  background: color-mix(in srgb, var(--accent) 14%, white);
 }
 
 .picker-loading,
@@ -550,7 +601,7 @@ body {
 }
 
 .picker-item-rich:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: color-mix(in srgb, var(--accent) 12%, white);
   border-left-color: var(--accent);
 }
 
@@ -871,7 +922,7 @@ body {
 
 .search-result-item:hover,
 .search-result-item--active {
-  background: rgba(99, 102, 241, 0.12);
+  background: color-mix(in srgb, var(--accent) 14%, white);
 }
 
 @keyframes pillEnter {
@@ -1178,6 +1229,13 @@ body {
 .form-content {
   flex: 1;
   min-width: 0;
+  background: color-mix(in srgb, var(--bg-elevated) 88%, white);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 1.4rem 1.35rem 1.5rem;
+  box-shadow:
+    0 18px 40px color-mix(in srgb, var(--accent) 10%, transparent),
+    0 1px 0 color-mix(in srgb, black 6%, transparent) inset;
 }
 
 /* ─── Form Sidebar ────────────────────────────── */
@@ -1186,7 +1244,12 @@ body {
   width: var(--sidebar-width);
   flex-shrink: 0;
   position: sticky;
-  top: 2rem;
+  top: 1.25rem;
+  background: color-mix(in srgb, var(--bg-surface) 84%, white);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 0.7rem;
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 10%, transparent);
 }
 
 /* ─── Form Stepper (sidebar) ──────────────────── */
@@ -1214,7 +1277,7 @@ body {
   background: none;
   border: none;
   border-left: 2px solid transparent;
-  border-radius: 0 var(--radius) var(--radius) 0;
+  border-radius: var(--radius);
   color: var(--text-muted);
   font-size: 0.82rem;
   font-weight: 500;
@@ -1226,13 +1289,13 @@ body {
 
 .step-link:hover {
   color: var(--text);
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--accent) 9%, white);
 }
 
 .step-link.step-active {
-  color: var(--text);
+  color: var(--brand-ink);
   border-left-color: var(--accent);
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--accent) 12%, white);
 }
 
 /* Step indicators */
@@ -1380,7 +1443,7 @@ body {
   align-items: center;
   gap: 0.4rem;
   padding: 0.6rem 1.25rem;
-  border-radius: var(--radius);
+  border-radius: 999px;
   font-size: 0.88rem;
   font-weight: 500;
   font-family: inherit;
@@ -1394,7 +1457,7 @@ body {
 }
 
 .nav-btn--back {
-  background: var(--bg-surface);
+  background: color-mix(in srgb, var(--bg-surface) 70%, white);
   color: var(--text-muted);
   border: 1px solid var(--border);
 }
@@ -1405,7 +1468,7 @@ body {
 }
 
 .nav-btn--next {
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, white);
   color: var(--text);
   border: 1px solid var(--border);
 }
@@ -1416,13 +1479,14 @@ body {
 }
 
 .nav-btn--submit {
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-hover));
   color: #fff;
   font-weight: 600;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 36%, transparent);
 }
 
 .nav-btn--submit:hover {
-  background: var(--accent-hover);
+  filter: brightness(1.06);
 }
 
 .nav-btn--submit:disabled {
@@ -1456,7 +1520,7 @@ body {
   padding: 0.55rem 0.75rem;
   margin-top: 0.5rem;
   background: none;
-  border: 1px dashed var(--border);
+  border: 1px dashed color-mix(in srgb, var(--accent) 30%, var(--border));
   border-radius: var(--radius);
   color: var(--text-muted);
   font-size: 0.78rem;
@@ -1468,8 +1532,8 @@ body {
 
 .drawer-trigger:hover {
   color: var(--text);
-  border-color: var(--text-muted);
-  background: var(--bg-surface);
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, white);
 }
 
 .drawer-backdrop {
@@ -1748,7 +1812,7 @@ body {
 }
 
 .drawer-toast-undo:hover {
-  background: rgba(99, 102, 241, 0.1);
+  background: color-mix(in srgb, var(--accent) 12%, white);
 }
 
 @keyframes toastIn {
