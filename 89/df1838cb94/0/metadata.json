@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.4.2",
+  "checkpoint_id": "89df1838cb94",
+  "session_id": "b944113c-1e55-491a-91f5-5cfc086e2673",
+  "strategy": "manual-commit",
+  "created_at": "2026-02-13T07:04:59.975733Z",
+  "branch": "feat/submission-efficiency",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "app/actions/fetch-options.ts",
+    "app/globals.css",
+    "components/form/FormStepper.tsx",
+    "components/form/HistoryDrawer.tsx",
+    "components/form/ItemizationForm.tsx",
+    "docs/brainstorms/2026-02-12-submission-efficiency-brainstorm.md",
+    "docs/plans/2026-02-12-feat-submission-efficiency-plan.md",
+    "lib/conditional-logic.ts",
+    "lib/storage.ts"
+  ],
+  "agent": "Claude Code",
+  "token_usage": {
+    "input_tokens": 1113,
+    "cache_creation_tokens": 439636,
+    "cache_read_tokens": 19269828,
+    "output_tokens": 8913,
+    "api_call_count": 186
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-02-13T07:04:59.478836Z",
+    "agent_lines": 2854,
+    "human_added": 529,
+    "human_modified": 59,
+    "human_removed": 0,
+    "total_committed": 3442,
+    "agent_percentage": 82.91690877396863
+  }
+}

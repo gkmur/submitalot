@@ -1,0 +1,2558 @@
+# Brainstorm a Feature or Improvement
+
+**Note: The current year is 2026.** Use this when dating brainstorm documents.
+
+Brainstorming helps answer **WHAT** to build through collaborative dialogue. It precedes `/workflows:plan`, which answers **HOW** to build it.
+
+**Process knowledge:** Load the `brainstorming` skill for detailed question techniques, approach exploration patterns, and YAGNI principles.
+
+## Feature Description
+
+<feature_description> #one of the biggest points for people submitting this form is having to like do the same thing but just one different attribute. so i need to give more features and options for them to be able to submit more efficiently and faster. sometime sthey just need to switch the inventory file, sometimes they just want to maybe submit under the same seller, etc. theres a bunch of different avenues but being able to like rpefill submissions would be rly helpful and maybe a way for them to keep track or copy over historic submissions. maybe we give them a way to like have their own profile and track their submissions here? help me get this to a good spot then we will do the slfg </feature_description>
+
+**If the feature description above is empty, ask the user:** "What would you like to explore? Please describe the feature, problem, or improvement you're thinking about."
+
+Do not proceed until you have a feature description from the user.
+
+## Execution Flow
+
+### Phase 0: Assess Requirements Clarity
+
+Evaluate whether brainstorming is needed based on the feature description.
+
+**Clear requirements indicators:**
+- Specific acceptance criteria provided
+- Referenced existing patterns to follow
+- Described exact expected behavior
+- Constrained, well-defined scope
+
+**If requirements are already clear:**
+Use **AskUserQuestion tool** to suggest: "Your requirements seem detailed enough to proceed directly to planning. Should I run `/workflows:plan` instead, or would you like to explore the idea further?"
+
+### Phase 1: Understand the Idea
+
+#### 1.1 Repository Research (Lightweight)
+
+Run a quick repo scan to understand existing patterns:
+
+- Task repo-research-analyst("Understand existing patterns related to: <feature_description>")
+
+Focus on: similar features, established patterns, CLAUDE.md guidance.
+
+#### 1.2 Collaborative Dialogue
+
+Use the **AskUserQuestion tool** to ask questions **one at a time**.
+
+**Guidelines (see `brainstorming` skill for detailed techniques):**
+- Prefer multiple choice when natural options exist
+- Start broad (purpose, users) then narrow (constraints, edge cases)
+- Validate assumptions explicitly
+- Ask about success criteria
+
+**Exit condition:** Continue until the idea is clear OR user says "proceed"
+
+### Phase 2: Explore Approaches
+
+Propose **2-3 concrete approaches** based on research and conversation.
+
+For each approach, provide:
+- Brief description (2-3 sentences)
+- Pros and cons
+- When it's best suited
+
+Lead with your recommendation and explain why. Apply YAGNI—prefer simpler solutions.
+
+Use **AskUserQuestion tool** to ask which approach the user prefers.
+
+### Phase 3: Capture the Design
+
+Write a brainstorm document to `docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md`.
+
+**Document structure:** See the `brainstorming` skill for the template format. Key sections: What We're Building, Why This Approach, Key Decisions, Open Questions.
+
+Ensure `docs/brainstorms/` directory exists before writing.
+
+### Phase 4: Handoff
+
+Use **AskUserQuestion tool** to present next steps:
+
+**Question:** "Brainstorm captured. What would you like to do next?"
+
+**Options:**
+1. **Review and refine** - Improve the document through structured self-review
+2. **Proceed to planning** - Run `/workflows:plan` (will auto-detect this brainstorm)
+3. **Done for now** - Return later
+
+**If user selects "Review and refine":**
+
+Load the `document-review` skill and apply it to the brainstorm document.
+
+When document-review returns "Review complete", present next steps:
+
+1. **Move to planning** - Continue to `/workflows:plan` with this document
+2. **Done for now** - Brainstorming complete. To start planning later: `/workflows:plan [document-path]`
+
+## Output Summary
+
+When complete, display:
+
+```
+Brainstorm complete!
+
+Document: docs/brainstorms/YYYY-MM-DD-<topic>-brainstorm.md
+
+Key decisions:
+- [Decision 1]
+- [Decision 2]
+
+Next: Run `/workflows:plan` when ready to implement.
+```
+
+## Important Guidelines
+
+- **Stay focused on WHAT, not HOW** - Implementation details belong in the plan
+- **Ask one question at a time** - Don't overwhelm
+- **Apply YAGNI** - Prefer simpler approaches
+- **Keep outputs concise** - 200-300 words per section max
+
+NEVER CODE! Just explore and document decisions.
+
+---
+
+Swarm-enabled LFG. Run these steps in order, parallelizing where indicated.
+
+## Sequential Phase
+
+1. `/ralph-wiggum:ralph-loop "finish all slash commands" --completion-promise "DONE"`
+2. `/workflows:plan `
+3. `/compound-engineering:deepen-plan`
+4. `/workflows:work` — **Use swarm mode**: Make a Task list and launch an army of agent swarm subagents to build the plan
+
+## Parallel Phase
+
+After work completes, launch steps 5 and 6 as **parallel swarm agents** (both only need code to be written):
+
+5. `/workflows:review` — spawn as background Task agent
+6. `/compound-engineering:test-browser` — spawn as background Task agent
+
+Wait for both to complete before continuing.
+
+## Finalize Phase
+
+7. `/compound-engineering:resolve_todo_parallel` — resolve any findings from the review
+8. `/compound-engineering:feature-video` — record the final walkthrough and add to PR
+9. Output `<promise>DONE</promise>` when video is in PR
+
+Start with step 1 now.
+
+---
+
+# Ralph Loop Command
+
+Execute the setup script to initialize the Ralph loop:
+
+🔄 Ralph loop activated in this session!
+
+Iteration: 1
+Max iterations: unlimited
+Completion promise: DONE (ONLY output when TRUE - do not lie!)
+
+The stop hook is now active. When you try to exit, the SAME PROMPT will be
+fed back to you. You'll see your previous work in files, creating a
+self-referential loop where you iteratively improve on the same task.
+
+To monitor: head -10 .claude/ralph-loop.local.md
+
+⚠️  WARNING: This loop cannot be stopped manually! It will run infinitely
+    unless you set --max-iterations or --completion-promise.
+
+🔄
+
+finish all slash commands
+
+═══════════════════════════════════════════════════════════
+CRITICAL - Ralph Loop Completion Promise
+═══════════════════════════════════════════════════════════
+
+To complete this loop, output this EXACT text:
+  <promise>DONE</promise>
+
+STRICT REQUIREMENTS (DO NOT VIOLATE):
+  ✓ Use <promise> XML tags EXACTLY as shown above
+  ✓ The statement MUST be completely and unequivocally TRUE
+  ✓ Do NOT output false statements to exit the loop
+  ✓ Do NOT lie even if you think you should exit
+
+IMPORTANT - Do not circumvent the loop:
+  Even if you believe you're stuck, the task is impossible,
+  or you've been running too long - you MUST NOT output a
+  false promise statement. The loop is designed to continue
+  until the promise is GENUINELY TRUE. Trust the process.
+
+  If the loop should stop, the promise statement will become
+  true naturally. Do not force it by lying.
+═══════════════════════════════════════════════════════════
+
+Please work on the task. When you try to exit, the Ralph loop will feed the SAME PROMPT back to you for the next iteration. You'll see your previous work in files and git history, allowing you to iterate and improve.
+
+CRITICAL RULE: If a completion promise is set, you may ONLY output it when the statement is completely and unequivocally TRUE. Do not output false promises to escape the loop, even if you think you're stuck or should exit for other reasons. The loop is designed to continue until genuine completion.
+
+---
+
+# Create a plan for a new feature or bug fix
+
+## Introduction
+
+**Note: The current year is 2026.** Use this when dating plans and searching for recent documentation.
+
+Transform feature descriptions, bug reports, or improvement ideas into well-structured markdown files issues that follow project conventions and best practices. This command provides flexible detail levels to match your needs.
+
+## Feature Description
+
+<feature_description> #docs/brainstorms/2026-02-12-submission-efficiency-brainstorm.md </feature_description>
+
+**If the feature description above is empty, ask the user:** "What would you like to plan? Please describe the feature, bug fix, or improvement you have in mind."
+
+Do not proceed until you have a clear feature description from the user.
+
+### 0. Idea Refinement
+
+**Check for brainstorm output first:**
+
+Before asking questions, look for recent brainstorm documents in `docs/brainstorms/` that match this feature:
+
+```bash
+ls -la docs/brainstorms/*.md 2>/dev/null | head -10
+```
+
+**Relevance criteria:** A brainstorm is relevant if:
+- The topic (from filename or YAML frontmatter) semantically matches the feature description
+- Created within the last 14 days
+- If multiple candidates match, use the most recent one
+
+**If a relevant brainstorm exists:**
+1. Read the brainstorm document
+2. Announce: "Found brainstorm from [date]: [topic]. Using as context for planning."
+3. Extract key decisions, chosen approach, and open questions
+4. **Skip the idea refinement questions below** - the brainstorm already answered WHAT to build
+5. Use brainstorm decisions as input to the research phase
+
+**If multiple brainstorms could match:**
+Use **AskUserQuestion tool** to ask which brainstorm to use, or whether to proceed without one.
+
+**If no brainstorm found (or not relevant), run idea refinement:**
+
+Refine the idea through collaborative dialogue using the **AskUserQuestion tool**:
+
+- Ask questions one at a time to understand the idea fully
+- Prefer multiple choice questions when natural options exist
+- Focus on understanding: purpose, constraints and success criteria
+- Continue until the idea is clear OR user says "proceed"
+
+**Gather signals for research decision.** During refinement, note:
+
+- **User's familiarity**: Do they know the codebase patterns? Are they pointing to examples?
+- **User's intent**: Speed vs thoroughness? Exploration vs execution?
+- **Topic risk**: Security, payments, external APIs warrant more caution
+- **Uncertainty level**: Is the approach clear or open-ended?
+
+**Skip option:** If the feature description is already detailed, offer:
+"Your description is clear. Should I proceed with research, or would you like to refine it further?"
+
+## Main Tasks
+
+### 1. Local Research (Always Runs - Parallel)
+
+<thinking>
+First, I need to understand the project's conventions, existing patterns, and any documented learnings. This is fast and local - it informs whether external research is needed.
+</thinking>
+
+Run these agents **in parallel** to gather local context:
+
+- Task repo-research-analyst(feature_description)
+- Task learnings-researcher(feature_description)
+
+**What to look for:**
+- **Repo research:** existing patterns, CLAUDE.md guidance, technology familiarity, pattern consistency
+- **Learnings:** documented solutions in `docs/solutions/` that might apply (gotchas, patterns, lessons learned)
+
+These findings inform the next step.
+
+### 1.5. Research Decision
+
+Based on signals from Step 0 and findings from Step 1, decide on external research.
+
+**High-risk topics → always research.** Security, payments, external APIs, data privacy. The cost of missing something is too high. This takes precedence over speed signals.
+
+**Strong local context → skip external research.** Codebase has good patterns, CLAUDE.md has guidance, user knows what they want. External research adds little value.
+
+**Uncertainty or unfamiliar territory → research.** User is exploring, codebase has no examples, new technology. External perspective is valuable.
+
+**Announce the decision and proceed.** Brief explanation, then continue. User can redirect if needed.
+
+Examples:
+- "Your codebase has solid patterns for this. Proceeding without external research."
+- "This involves payment processing, so I'll research current best practices first."
+
+### 1.5b. External Research (Conditional)
+
+**Only run if Step 1.5 indicates external research is valuable.**
+
+Run these agents in parallel:
+
+- Task best-practices-researcher(feature_description)
+- Task framework-docs-researcher(feature_description)
+
+### 1.6. Consolidate Research
+
+After all research steps complete, consolidate findings:
+
+- Document relevant file paths from repo research (e.g., `app/services/example_service.rb:42`)
+- **Include relevant institutional learnings** from `docs/solutions/` (key insights, gotchas to avoid)
+- Note external documentation URLs and best practices (if external research was done)
+- List related issues or PRs discovered
+- Capture CLAUDE.md conventions
+
+**Optional validation:** Briefly summarize findings and ask if anything looks off or missing before proceeding to planning.
+
+### 2. Issue Planning & Structure
+
+<thinking>
+Think like a product manager - what would make this issue clear and actionable? Consider multiple perspectives
+</thinking>
+
+**Title & Categorization:**
+
+- [ ] Draft clear, searchable issue title using conventional format (e.g., `feat: Add user authentication`, `fix: Cart total calculation`)
+- [ ] Determine issue type: enhancement, bug, refactor
+- [ ] Convert title to filename: add today's date prefix, strip prefix colon, kebab-case, add `-plan` suffix
+  - Example: `feat: Add User Authentication` → `2026-01-21-feat-add-user-authentication-plan.md`
+  - Keep it descriptive (3-5 words after prefix) so plans are findable by context
+
+**Stakeholder Analysis:**
+
+- [ ] Identify who will be affected by this issue (end users, developers, operations)
+- [ ] Consider implementation complexity and required expertise
+
+**Content Planning:**
+
+- [ ] Choose appropriate detail level based on issue complexity and audience
+- [ ] List all necessary sections for the chosen template
+- [ ] Gather supporting materials (error logs, screenshots, design mockups)
+- [ ] Prepare code examples or reproduction steps if applicable, name the mock filenames in the lists
+
+### 3. SpecFlow Analysis
+
+After planning the issue structure, run SpecFlow Analyzer to validate and refine the feature specification:
+
+- Task spec-flow-analyzer(feature_description, research_findings)
+
+**SpecFlow Analyzer Output:**
+
+- [ ] Review SpecFlow analysis results
+- [ ] Incorporate any identified gaps or edge cases into the issue
+- [ ] Update acceptance criteria based on SpecFlow findings
+
+### 4. Choose Implementation Detail Level
+
+Select how comprehensive you want the issue to be, simpler is mostly better.
+
+#### 📄 MINIMAL (Quick Issue)
+
+**Best for:** Simple bugs, small improvements, clear features
+
+**Includes:**
+
+- Problem statement or feature description
+- Basic acceptance criteria
+- Essential context only
+
+**Structure:**
+
+````markdown
+---
+title: [Issue Title]
+type: [feat|fix|refactor]
+date: YYYY-MM-DD
+---
+
+# [Issue Title]
+
+[Brief problem/feature description]
+
+## Acceptance Criteria
+
+- [ ] Core requirement 1
+- [ ] Core requirement 2
+
+## Context
+
+[Any critical information]
+
+## MVP
+
+### test.rb
+
+```ruby
+class Test
+  def initialize
+    @name = "test"
+  end
+end
+```
+
+## References
+
+- Related issue: #[issue_number]
+- Documentation: [relevant_docs_url]
+````
+
+#### 📋 MORE (Standard Issue)
+
+**Best for:** Most features, complex bugs, team collaboration
+
+**Includes everything from MINIMAL plus:**
+
+- Detailed background and motivation
+- Technical considerations
+- Success metrics
+- Dependencies and risks
+- Basic implementation suggestions
+
+**Structure:**
+
+```markdown
+---
+title: [Issue Title]
+type: [feat|fix|refactor]
+date: YYYY-MM-DD
+---
+
+# [Issue Title]
+
+## Overview
+
+[Comprehensive description]
+
+## Problem Statement / Motivation
+
+[Why this matters]
+
+## Proposed Solution
+
+[High-level approach]
+
+## Technical Considerations
+
+- Architecture impacts
+- Performance implications
+- Security considerations
+
+## Acceptance Criteria
+
+- [ ] Detailed requirement 1
+- [ ] Detailed requirement 2
+- [ ] Testing requirements
+
+## Success Metrics
+
+[How we measure success]
+
+## Dependencies & Risks
+
+[What could block or complicate this]
+
+## References & Research
+
+- Similar implementations: [file_path:line_number]
+- Best practices: [documentation_url]
+- Related PRs: #[pr_number]
+```
+
+#### 📚 A LOT (Comprehensive Issue)
+
+**Best for:** Major features, architectural changes, complex integrations
+
+**Includes everything from MORE plus:**
+
+- Detailed implementation plan with phases
+- Alternative approaches considered
+- Extensive technical specifications
+- Resource requirements and timeline
+- Future considerations and extensibility
+- Risk mitigation strategies
+- Documentation requirements
+
+**Structure:**
+
+```markdown
+---
+title: [Issue Title]
+type: [feat|fix|refactor]
+date: YYYY-MM-DD
+---
+
+# [Issue Title]
+
+## Overview
+
+[Executive summary]
+
+## Problem Statement
+
+[Detailed problem analysis]
+
+## Proposed Solution
+
+[Comprehensive solution design]
+
+## Technical Approach
+
+### Architecture
+
+[Detailed technical design]
+
+### Implementation Phases
+
+#### Phase 1: [Foundation]
+
+- Tasks and deliverables
+- Success criteria
+- Estimated effort
+
+#### Phase 2: [Core Implementation]
+
+- Tasks and deliverables
+- Success criteria
+- Estimated effort
+
+#### Phase 3: [Polish & Optimization]
+
+- Tasks and deliverables
+- Success criteria
+- Estimated effort
+
+## Alternative Approaches Considered
+
+[Other solutions evaluated and why rejected]
+
+## Acceptance Criteria
+
+### Functional Requirements
+
+- [ ] Detailed functional criteria
+
+### Non-Functional Requirements
+
+- [ ] Performance targets
+- [ ] Security requirements
+- [ ] Accessibility standards
+
+### Quality Gates
+
+- [ ] Test coverage requirements
+- [ ] Documentation completeness
+- [ ] Code review approval
+
+## Success Metrics
+
+[Detailed KPIs and measurement methods]
+
+## Dependencies & Prerequisites
+
+[Detailed dependency analysis]
+
+## Risk Analysis & Mitigation
+
+[Comprehensive risk assessment]
+
+## Resource Requirements
+
+[Team, time, infrastructure needs]
+
+## Future Considerations
+
+[Extensibility and long-term vision]
+
+## Documentation Plan
+
+[What docs need updating]
+
+## References & Research
+
+### Internal References
+
+- Architecture decisions: [file_path:line_number]
+- Similar features: [file_path:line_number]
+- Configuration: [file_path:line_number]
+
+### External References
+
+- Framework documentation: [url]
+- Best practices guide: [url]
+- Industry standards: [url]
+
+### Related Work
+
+- Previous PRs: #[pr_numbers]
+- Related issues: #[issue_numbers]
+- Design documents: [links]
+```
+
+### 5. Issue Creation & Formatting
+
+<thinking>
+Apply best practices for clarity and actionability, making the issue easy to scan and understand
+</thinking>
+
+**Content Formatting:**
+
+- [ ] Use clear, descriptive headings with proper hierarchy (##, ###)
+- [ ] Include code examples in triple backticks with language syntax highlighting
+- [ ] Add screenshots/mockups if UI-related (drag & drop or use image hosting)
+- [ ] Use task lists (- [ ]) for trackable items that can be checked off
+- [ ] Add collapsible sections for lengthy logs or optional details using `<details>` tags
+- [ ] Apply appropriate emoji for visual scanning (🐛 bug, ✨ feature, 📚 docs, ♻️ refactor)
+
+**Cross-Referencing:**
+
+- [ ] Link to related issues/PRs using #number format
+- [ ] Reference specific commits with SHA hashes when relevant
+- [ ] Link to code using GitHub's permalink feature (press 'y' for permanent link)
+- [ ] Mention relevant team members with @username if needed
+- [ ] Add links to external resources with descriptive text
+
+**Code & Examples:**
+
+````markdown
+# Good example with syntax highlighting and line references
+
+
+```ruby
+# app/services/user_service.rb:42
+def process_user(user)
+
+# Implementation here
+
+end
+```
+
+# Collapsible error logs
+
+<details>
+<summary>Full error stacktrace</summary>
+
+`Error details here...`
+
+</details>
+````
+
+**AI-Era Considerations:**
+
+- [ ] Account for accelerated development with AI pair programming
+- [ ] Include prompts or instructions that worked well during research
+- [ ] Note which AI tools were used for initial exploration (Claude, Copilot, etc.)
+- [ ] Emphasize comprehensive testing given rapid implementation
+- [ ] Document any AI-generated code that needs human review
+
+### 6. Final Review & Submission
+
+**Pre-submission Checklist:**
+
+- [ ] Title is searchable and descriptive
+- [ ] Labels accurately categorize the issue
+- [ ] All template sections are complete
+- [ ] Links and references are working
+- [ ] Acceptance criteria are measurable
+- [ ] Add names of files in pseudo code examples and todo lists
+- [ ] Add an ERD mermaid diagram if applicable for new model changes
+
+## Output Format
+
+**Filename:** Use the date and kebab-case filename from Step 2 Title & Categorization.
+
+```
+docs/plans/YYYY-MM-DD-<type>-<descriptive-name>-plan.md
+```
+
+Examples:
+- ✅ `docs/plans/2026-01-15-feat-user-authentication-flow-plan.md`
+- ✅ `docs/plans/2026-02-03-fix-checkout-race-condition-plan.md`
+- ✅ `docs/plans/2026-03-10-refactor-api-client-extraction-plan.md`
+- ❌ `docs/plans/2026-01-15-feat-thing-plan.md` (not descriptive - what "thing"?)
+- ❌ `docs/plans/2026-01-15-feat-new-feature-plan.md` (too vague - what feature?)
+- ❌ `docs/plans/2026-01-15-feat: user auth-plan.md` (invalid characters - colon and space)
+- ❌ `docs/plans/feat-user-auth-plan.md` (missing date prefix)
+
+## Post-Generation Options
+
+After writing the plan file, use the **AskUserQuestion tool** to present these options:
+
+**Question:** "Plan ready at `docs/plans/YYYY-MM-DD-<type>-<name>-plan.md`. What would you like to do next?"
+
+**Options:**
+1. **Open plan in editor** - Open the plan file for review
+2. **Run `/deepen-plan`** - Enhance each section with parallel research agents (best practices, performance, UI)
+3. **Run `/technical_review`** - Technical feedback from code-focused reviewers (DHH, Kieran, Simplicity)
+4. **Review and refine** - Improve the document through structured self-review
+5. **Start `/workflows:work`** - Begin implementing this plan locally
+6. **Start `/workflows:work` on remote** - Begin implementing in Claude Code on the web (use `&` to run in background)
+7. **Create Issue** - Create issue in project tracker (GitHub/Linear)
+
+Based on selection:
+- **Open plan in editor** → Run `open docs/plans/<plan_filename>.md` to open the file in the user's default editor
+- **`/deepen-plan`** → Call the /deepen-plan command with the plan file path to enhance with research
+- **`/technical_review`** → Call the /technical_review command with the plan file path
+- **Review and refine** → Load `document-review` skill.
+- **`/workflows:work`** → Call the /workflows:work command with the plan file path
+- **`/workflows:work` on remote** → Run `/workflows:work docs/plans/<plan_filename>.md &` to start work in background for Claude Code web
+- **Create Issue** → See "Issue Creation" section below
+- **Other** (automatically provided) → Accept free text for rework or specific changes
+
+**Note:** If running `/workflows:plan` with ultrathink enabled, automatically run `/deepen-plan` after plan creation for maximum depth and grounding.
+
+Loop back to options after Simplify or Other changes until user selects `/workflows:work` or `/technical_review`.
+
+## Issue Creation
+
+When user selects "Create Issue", detect their project tracker from CLAUDE.md:
+
+1. **Check for tracker preference** in user's CLAUDE.md (global or project):
+   - Look for `project_tracker: github` or `project_tracker: linear`
+   - Or look for mentions of "GitHub Issues" or "Linear" in their workflow section
+
+2. **If GitHub:**
+
+   Use the title and type from Step 2 (already in context - no need to re-read the file):
+
+   ```bash
+   gh issue create --title "<type>: <title>" --body-file <plan_path>
+   ```
+
+3. **If Linear:**
+
+   ```bash
+   linear issue create --title "<title>" --description "$(cat <plan_path>)"
+   ```
+
+4. **If no tracker configured:**
+   Ask user: "Which project tracker do you use? (GitHub/Linear/Other)"
+   - Suggest adding `project_tracker: github` or `project_tracker: linear` to their CLAUDE.md
+
+5. **After creation:**
+   - Display the issue URL
+   - Ask if they want to proceed to `/workflows:work` or `/technical_review`
+
+NEVER CODE! Just research and write the plan.
+
+---
+
+# Deepen Plan - Power Enhancement Mode
+
+## Introduction
+
+**Note: The current year is 2026.** Use this when searching for recent documentation and best practices.
+
+This command takes an existing plan (from `/workflows:plan`) and enhances each section with parallel research agents. Each major element gets its own dedicated research sub-agent to find:
+- Best practices and industry patterns
+- Performance optimizations
+- UI/UX improvements (if applicable)
+- Quality enhancements and edge cases
+- Real-world implementation examples
+
+The result is a deeply grounded, production-ready plan with concrete implementation details.
+
+## Plan File
+
+<plan_path> #docs/plans/2026-02-12-feat-submission-efficiency-plan.md </plan_path>
+
+**If the plan path above is empty:**
+1. Check for recent plans: `ls -la docs/plans/`
+2. Ask the user: "Which plan would you like to deepen? Please provide the path (e.g., `docs/plans/2026-01-15-feat-my-feature-plan.md`)."
+
+Do not proceed until you have a valid plan file path.
+
+## Main Tasks
+
+### 1. Parse and Analyze Plan Structure
+
+<thinking>
+First, read and parse the plan to identify each major section that can be enhanced with research.
+</thinking>
+
+**Read the plan file and extract:**
+- [ ] Overview/Problem Statement
+- [ ] Proposed Solution sections
+- [ ] Technical Approach/Architecture
+- [ ] Implementation phases/steps
+- [ ] Code examples and file references
+- [ ] Acceptance criteria
+- [ ] Any UI/UX components mentioned
+- [ ] Technologies/frameworks mentioned (Rails, React, Python, TypeScript, etc.)
+- [ ] Domain areas (data models, APIs, UI, security, performance, etc.)
+
+**Create a section manifest:**
+```
+Section 1: [Title] - [Brief description of what to research]
+Section 2: [Title] - [Brief description of what to research]
+...
+```
+
+### 2. Discover and Apply Available Skills
+
+<thinking>
+Dynamically discover all available skills and match them to plan sections. Don't assume what skills exist - discover them at runtime.
+</thinking>
+
+**Step 1: Discover ALL available skills from ALL sources**
+
+```bash
+# 1. Project-local skills (highest priority - project-specific)
+ls .claude/skills/
+
+# 2. User's global skills (~/.claude/)
+ls ~/.claude/skills/
+
+# 3. compound-engineering plugin skills
+ls ~/.claude/plugins/cache/*/compound-engineering/*/skills/
+
+# 4. ALL other installed plugins - check every plugin for skills
+find ~/.claude/plugins/cache -type d -name "skills" 2>/dev/null
+
+# 5. Also check installed_plugins.json for all plugin locations
+cat ~/.claude/plugins/installed_plugins.json
+```
+
+**Important:** Check EVERY source. Don't assume compound-engineering is the only plugin. Use skills from ANY installed plugin that's relevant.
+
+**Step 2: For each discovered skill, read its SKILL.md to understand what it does**
+
+```bash
+# For each skill directory found, read its documentation
+cat [skill-path]/SKILL.md
+```
+
+**Step 3: Match skills to plan content**
+
+For each skill discovered:
+- Read its SKILL.md description
+- Check if any plan sections match the skill's domain
+- If there's a match, spawn a sub-agent to apply that skill's knowledge
+
+**Step 4: Spawn a sub-agent for EVERY matched skill**
+
+**CRITICAL: For EACH skill that matches, spawn a separate sub-agent and instruct it to USE that skill.**
+
+For each matched skill:
+```
+Task general-purpose: "You have the [skill-name] skill available at [skill-path].
+
+YOUR JOB: Use this skill on the plan.
+
+1. Read the skill: cat [skill-path]/SKILL.md
+2. Follow the skill's instructions exactly
+3. Apply the skill to this content:
+
+[relevant plan section or full plan]
+
+4. Return the skill's full output
+
+The skill tells you what to do - follow it. Execute the skill completely."
+```
+
+**Spawn ALL skill sub-agents in PARALLEL:**
+- 1 sub-agent per matched skill
+- Each sub-agent reads and uses its assigned skill
+- All run simultaneously
+- 10, 20, 30 skill sub-agents is fine
+
+**Each sub-agent:**
+1. Reads its skill's SKILL.md
+2. Follows the skill's workflow/instructions
+3. Applies the skill to the plan
+4. Returns whatever the skill produces (code, recommendations, patterns, reviews, etc.)
+
+**Example spawns:**
+```
+Task general-purpose: "Use the dhh-rails-style skill at ~/.claude/plugins/.../dhh-rails-style. Read SKILL.md and apply it to: [Rails sections of plan]"
+
+Task general-purpose: "Use the frontend-design skill at ~/.claude/plugins/.../frontend-design. Read SKILL.md and apply it to: [UI sections of plan]"
+
+Task general-purpose: "Use the agent-native-architecture skill at ~/.claude/plugins/.../agent-native-architecture. Read SKILL.md and apply it to: [agent/tool sections of plan]"
+
+Task general-purpose: "Use the security-patterns skill at ~/.claude/skills/security-patterns. Read SKILL.md and apply it to: [full plan]"
+```
+
+**No limit on skill sub-agents. Spawn one for every skill that could possibly be relevant.**
+
+### 3. Discover and Apply Learnings/Solutions
+
+<thinking>
+Check for documented learnings from /workflows:compound. These are solved problems stored as markdown files. Spawn a sub-agent for each learning to check if it's relevant.
+</thinking>
+
+**LEARNINGS LOCATION - Check these exact folders:**
+
+```
+docs/solutions/           <-- PRIMARY: Project-level learnings (created by /workflows:compound)
+├── performance-issues/
+│   └── *.md
+├── debugging-patterns/
+│   └── *.md
+├── configuration-fixes/
+│   └── *.md
+├── integration-issues/
+│   └── *.md
+├── deployment-issues/
+│   └── *.md
+└── [other-categories]/
+    └── *.md
+```
+
+**Step 1: Find ALL learning markdown files**
+
+Run these commands to get every learning file:
+
+```bash
+# PRIMARY LOCATION - Project learnings
+find docs/solutions -name "*.md" -type f 2>/dev/null
+
+# If docs/solutions doesn't exist, check alternate locations:
+find .claude/docs -name "*.md" -type f 2>/dev/null
+find ~/.claude/docs -name "*.md" -type f 2>/dev/null
+```
+
+**Step 2: Read frontmatter of each learning to filter**
+
+Each learning file has YAML frontmatter with metadata. Read the first ~20 lines of each file to get:
+
+```yaml
+---
+title: "N+1 Query Fix for Briefs"
+category: performance-issues
+tags: [activerecord, n-plus-one, includes, eager-loading]
+module: Briefs
+symptom: "Slow page load, multiple queries in logs"
+root_cause: "Missing includes on association"
+---
+```
+
+**For each .md file, quickly scan its frontmatter:**
+
+```bash
+# Read first 20 lines of each learning (frontmatter + summary)
+head -20 docs/solutions/**/*.md
+```
+
+**Step 3: Filter - only spawn sub-agents for LIKELY relevant learnings**
+
+Compare each learning's frontmatter against the plan:
+- `tags:` - Do any tags match technologies/patterns in the plan?
+- `category:` - Is this category relevant? (e.g., skip deployment-issues if plan is UI-only)
+- `module:` - Does the plan touch this module?
+- `symptom:` / `root_cause:` - Could this problem occur with the plan?
+
+**SKIP learnings that are clearly not applicable:**
+- Plan is frontend-only → skip `database-migrations/` learnings
+- Plan is Python → skip `rails-specific/` learnings
+- Plan has no auth → skip `authentication-issues/` learnings
+
+**SPAWN sub-agents for learnings that MIGHT apply:**
+- Any tag overlap with plan technologies
+- Same category as plan domain
+- Similar patterns or concerns
+
+**Step 4: Spawn sub-agents for filtered learnings**
+
+For each learning that passes the filter:
+
+```
+Task general-purpose: "
+LEARNING FILE: [full path to .md file]
+
+1. Read this learning file completely
+2. This learning documents a previously solved problem
+
+Check if this learning applies to this plan:
+
+---
+[full plan content]
+---
+
+If relevant:
+- Explain specifically how it applies
+- Quote the key insight or solution
+- Suggest where/how to incorporate it
+
+If NOT relevant after deeper analysis:
+- Say 'Not applicable: [reason]'
+"
+```
+
+**Example filtering:**
+```
+# Found 15 learning files, plan is about "Rails API caching"
+
+# SPAWN (likely relevant):
+docs/solutions/performance-issues/n-plus-one-queries.md      # tags: [activerecord] ✓
+docs/solutions/performance-issues/redis-cache-stampede.md    # tags: [caching, redis] ✓
+docs/solutions/configuration-fixes/redis-connection-pool.md  # tags: [redis] ✓
+
+# SKIP (clearly not applicable):
+docs/solutions/deployment-issues/heroku-memory-quota.md      # not about caching
+docs/solutions/frontend-issues/stimulus-race-condition.md    # plan is API, not frontend
+docs/solutions/authentication-issues/jwt-expiry.md           # plan has no auth
+```
+
+**Spawn sub-agents in PARALLEL for all filtered learnings.**
+
+**These learnings are institutional knowledge - applying them prevents repeating past mistakes.**
+
+### 4. Launch Per-Section Research Agents
+
+<thinking>
+For each major section in the plan, spawn dedicated sub-agents to research improvements. Use the Explore agent type for open-ended research.
+</thinking>
+
+**For each identified section, launch parallel research:**
+
+```
+Task Explore: "Research best practices, patterns, and real-world examples for: [section topic].
+Find:
+- Industry standards and conventions
+- Performance considerations
+- Common pitfalls and how to avoid them
+- Documentation and tutorials
+Return concrete, actionable recommendations."
+```
+
+**Also use Context7 MCP for framework documentation:**
+
+For any technologies/frameworks mentioned in the plan, query Context7:
+```
+mcp__plugin_compound-engineering_context7__resolve-library-id: Find library ID for [framework]
+mcp__plugin_compound-engineering_context7__query-docs: Query documentation for specific patterns
+```
+
+**Use WebSearch for current best practices:**
+
+Search for recent (2024-2026) articles, blog posts, and documentation on topics in the plan.
+
+### 5. Discover and Run ALL Review Agents
+
+<thinking>
+Dynamically discover every available agent and run them ALL against the plan. Don't filter, don't skip, don't assume relevance. 40+ parallel agents is fine. Use everything available.
+</thinking>
+
+**Step 1: Discover ALL available agents from ALL sources**
+
+```bash
+# 1. Project-local agents (highest priority - project-specific)
+find .claude/agents -name "*.md" 2>/dev/null
+
+# 2. User's global agents (~/.claude/)
+find ~/.claude/agents -name "*.md" 2>/dev/null
+
+# 3. compound-engineering plugin agents (all subdirectories)
+find ~/.claude/plugins/cache/*/compound-engineering/*/agents -name "*.md" 2>/dev/null
+
+# 4. ALL other installed plugins - check every plugin for agents
+find ~/.claude/plugins/cache -path "*/agents/*.md" 2>/dev/null
+
+# 5. Check installed_plugins.json to find all plugin locations
+cat ~/.claude/plugins/installed_plugins.json
+
+# 6. For local plugins (isLocal: true), check their source directories
+# Parse installed_plugins.json and find local plugin paths
+```
+
+**Important:** Check EVERY source. Include agents from:
+- Project `.claude/agents/`
+- User's `~/.claude/agents/`
+- compound-engineering plugin (but SKIP workflow/ agents - only use review/, research/, design/, docs/)
+- ALL other installed plugins (agent-sdk-dev, frontend-design, etc.)
+- Any local plugins
+
+**For compound-engineering plugin specifically:**
+- USE: `agents/review/*` (all reviewers)
+- USE: `agents/research/*` (all researchers)
+- USE: `agents/design/*` (design agents)
+- USE: `agents/docs/*` (documentation agents)
+- SKIP: `agents/workflow/*` (these are workflow orchestrators, not reviewers)
+
+**Step 2: For each discovered agent, read its description**
+
+Read the first few lines of each agent file to understand what it reviews/analyzes.
+
+**Step 3: Launch ALL agents in parallel**
+
+For EVERY agent discovered, launch a Task in parallel:
+
+```
+Task [agent-name]: "Review this plan using your expertise. Apply all your checks and patterns. Plan content: [full plan content]"
+```
+
+**CRITICAL RULES:**
+- Do NOT filter agents by "relevance" - run them ALL
+- Do NOT skip agents because they "might not apply" - let them decide
+- Launch ALL agents in a SINGLE message with multiple Task tool calls
+- 20, 30, 40 parallel agents is fine - use everything
+- Each agent may catch something others miss
+- The goal is MAXIMUM coverage, not efficiency
+
+**Step 4: Also discover and run research agents**
+
+Research agents (like `best-practices-researcher`, `framework-docs-researcher`, `git-history-analyzer`, `repo-research-analyst`) should also be run for relevant plan sections.
+
+### 6. Wait for ALL Agents and Synthesize Everything
+
+<thinking>
+Wait for ALL parallel agents to complete - skills, research agents, review agents, everything. Then synthesize all findings into a comprehensive enhancement.
+</thinking>
+
+**Collect outputs from ALL sources:**
+
+1. **Skill-based sub-agents** - Each skill's full output (code examples, patterns, recommendations)
+2. **Learnings/Solutions sub-agents** - Relevant documented learnings from /workflows:compound
+3. **Research agents** - Best practices, documentation, real-world examples
+4. **Review agents** - All feedback from every reviewer (architecture, security, performance, simplicity, etc.)
+5. **Context7 queries** - Framework documentation and patterns
+6. **Web searches** - Current best practices and articles
+
+**For each agent's findings, extract:**
+- [ ] Concrete recommendations (actionable items)
+- [ ] Code patterns and examples (copy-paste ready)
+- [ ] Anti-patterns to avoid (warnings)
+- [ ] Performance considerations (metrics, benchmarks)
+- [ ] Security considerations (vulnerabilities, mitigations)
+- [ ] Edge cases discovered (handling strategies)
+- [ ] Documentation links (references)
+- [ ] Skill-specific patterns (from matched skills)
+- [ ] Relevant learnings (past solutions that apply - prevent repeating mistakes)
+
+**Deduplicate and prioritize:**
+- Merge similar recommendations from multiple agents
+- Prioritize by impact (high-value improvements first)
+- Flag conflicting advice for human review
+- Group by plan section
+
+### 7. Enhance Plan Sections
+
+<thinking>
+Merge research findings back into the plan, adding depth without changing the original structure.
+</thinking>
+
+**Enhancement format for each section:**
+
+```markdown
+## [Original Section Title]
+
+[Original content preserved]
+
+### Research Insights
+
+**Best Practices:**
+- [Concrete recommendation 1]
+- [Concrete recommendation 2]
+
+**Performance Considerations:**
+- [Optimization opportunity]
+- [Benchmark or metric to target]
+
+**Implementation Details:**
+```[language]
+// Concrete code example from research
+```
+
+**Edge Cases:**
+- [Edge case 1 and how to handle]
+- [Edge case 2 and how to handle]
+
+**References:**
+- [Documentation URL 1]
+- [Documentation URL 2]
+```
+
+### 8. Add Enhancement Summary
+
+At the top of the plan, add a summary section:
+
+```markdown
+## Enhancement Summary
+
+**Deepened on:** [Date]
+**Sections enhanced:** [Count]
+**Research agents used:** [List]
+
+### Key Improvements
+1. [Major improvement 1]
+2. [Major improvement 2]
+3. [Major improvement 3]
+
+### New Considerations Discovered
+- [Important finding 1]
+- [Important finding 2]
+```
+
+### 9. Update Plan File
+
+**Write the enhanced plan:**
+- Preserve original filename
+- Add `-deepened` suffix if user prefers a new file
+- Update any timestamps or metadata
+
+## Output Format
+
+Update the plan file in place (or if user requests a separate file, append `-deepened` after `-plan`, e.g., `2026-01-15-feat-auth-plan-deepened.md`).
+
+## Quality Checks
+
+Before finalizing:
+- [ ] All original content preserved
+- [ ] Research insights clearly marked and attributed
+- [ ] Code examples are syntactically correct
+- [ ] Links are valid and relevant
+- [ ] No contradictions between sections
+- [ ] Enhancement summary accurately reflects changes
+
+## Post-Enhancement Options
+
+After writing the enhanced plan, use the **AskUserQuestion tool** to present these options:
+
+**Question:** "Plan deepened at `[plan_path]`. What would you like to do next?"
+
+**Options:**
+1. **View diff** - Show what was added/changed
+2. **Run `/technical_review`** - Get feedback from reviewers on enhanced plan
+3. **Start `/workflows:work`** - Begin implementing this enhanced plan
+4. **Deepen further** - Run another round of research on specific sections
+5. **Revert** - Restore original plan (if backup exists)
+
+Based on selection:
+- **View diff** → Run `git diff [plan_path]` or show before/after
+- **`/technical_review`** → Call the /technical_review command with the plan file path
+- **`/workflows:work`** → Call the /workflows:work command with the plan file path
+- **Deepen further** → Ask which sections need more research, then re-run those agents
+- **Revert** → Restore from git or backup
+
+## Example Enhancement
+
+**Before (from /workflows:plan):**
+```markdown
+## Technical Approach
+
+Use React Query for data fetching with optimistic updates.
+```
+
+**After (from /workflows:deepen-plan):**
+```markdown
+## Technical Approach
+
+Use React Query for data fetching with optimistic updates.
+
+### Research Insights
+
+**Best Practices:**
+- Configure `staleTime` and `cacheTime` based on data freshness requirements
+- Use `queryKey` factories for consistent cache invalidation
+- Implement error boundaries around query-dependent components
+
+**Performance Considerations:**
+- Enable `refetchOnWindowFocus: false` for stable data to reduce unnecessary requests
+- Use `select` option to transform and memoize data at query level
+- Consider `placeholderData` for instant perceived loading
+
+**Implementation Details:**
+```typescript
+// Recommended query configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+```
+
+**Edge Cases:**
+- Handle race conditions with `cancelQueries` on component unmount
+- Implement retry logic for transient network failures
+- Consider offline support with `persistQueryClient`
+
+**References:**
+- https://tanstack.com/query/latest/docs/react/guides/optimistic-updates
+- https://tkdodo.eu/blog/practical-react-query
+```
+
+NEVER CODE! Just research and enhance the plan.
+
+---
+
+# Work Plan Execution Command
+
+Execute a work plan efficiently while maintaining quality and finishing features.
+
+## Introduction
+
+This command takes a work document (plan, specification, or todo file) and executes it systematically. The focus is on **shipping complete features** by understanding requirements quickly, following existing patterns, and maintaining quality throughout.
+
+## Input Document
+
+<input_document> #docs/plans/2026-02-12-feat-submission-efficiency-plan.md </input_document>
+
+## Execution Workflow
+
+### Phase 1: Quick Start
+
+1. **Read Plan and Clarify**
+
+   - Read the work document completely
+   - Review any references or links provided in the plan
+   - If anything is unclear or ambiguous, ask clarifying questions now
+   - Get user approval to proceed
+   - **Do not skip this** - better to ask questions now than build the wrong thing
+
+2. **Setup Environment**
+
+   First, check the current branch:
+
+   ```bash
+   current_branch=$(git branch --show-current)
+   default_branch=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+
+   # Fallback if remote HEAD isn't set
+   if [ -z "$default_branch" ]; then
+     default_branch=$(git rev-parse --verify origin/main >/dev/null 2>&1 && echo "main" || echo "master")
+   fi
+   ```
+
+   **If already on a feature branch** (not the default branch):
+   - Ask: "Continue working on `[current_branch]`, or create a new branch?"
+   - If continuing, proceed to step 3
+   - If creating new, follow Option A or B below
+
+   **If on the default branch**, choose how to proceed:
+
+   **Option A: Create a new branch**
+   ```bash
+   git pull origin [default_branch]
+   git checkout -b feature-branch-name
+   ```
+   Use a meaningful name based on the work (e.g., `feat/user-authentication`, `fix/email-validation`).
+
+   **Option B: Use a worktree (recommended for parallel development)**
+   ```bash
+   skill: git-worktree
+   # The skill will create a new branch from the default branch in an isolated worktree
+   ```
+
+   **Option C: Continue on the default branch**
+   - Requires explicit user confirmation
+   - Only proceed after user explicitly says "yes, commit to [default_branch]"
+   - Never commit directly to the default branch without explicit permission
+
+   **Recommendation**: Use worktree if:
+   - You want to work on multiple features simultaneously
+   - You want to keep the default branch clean while experimenting
+   - You plan to switch between branches frequently
+
+3. **Create Todo List**
+   - Use TodoWrite to break plan into actionable tasks
+   - Include dependencies between tasks
+   - Prioritize based on what needs to be done first
+   - Include testing and quality check tasks
+   - Keep tasks specific and completable
+
+### Phase 2: Execute
+
+1. **Task Execution Loop**
+
+   For each task in priority order:
+
+   ```
+   while (tasks remain):
+     - Mark task as in_progress in TodoWrite
+     - Read any referenced files from the plan
+     - Look for similar patterns in codebase
+     - Implement following existing conventions
+     - Write tests for new functionality
+     - Run tests after changes
+     - Mark task as completed in TodoWrite
+     - Mark off the corresponding checkbox in the plan file ([ ] → [x])
+     - Evaluate for incremental commit (see below)
+   ```
+
+   **IMPORTANT**: Always update the original plan document by checking off completed items. Use the Edit tool to change `- [ ]` to `- [x]` for each task you finish. This keeps the plan as a living document showing progress and ensures no checkboxes are left unchecked.
+
+2. **Incremental Commits**
+
+   After completing each task, evaluate whether to create an incremental commit:
+
+   | Commit when... | Don't commit when... |
+   |----------------|---------------------|
+   | Logical unit complete (model, service, component) | Small part of a larger unit |
+   | Tests pass + meaningful progress | Tests failing |
+   | About to switch contexts (backend → frontend) | Purely scaffolding with no behavior |
+   | About to attempt risky/uncertain changes | Would need a "WIP" commit message |
+
+   **Heuristic:** "Can I write a commit message that describes a complete, valuable change? If yes, commit. If the message would be 'WIP' or 'partial X', wait."
+
+   **Commit workflow:**
+   ```bash
+   # 1. Verify tests pass (use project's test command)
+   # Examples: bin/rails test, npm test, pytest, go test, etc.
+
+   # 2. Stage only files related to this logical unit (not `git add .`)
+   git add <files related to this logical unit>
+
+   # 3. Commit with conventional message
+   git commit -m "feat(scope): description of this unit"
+   ```
+
+   **Handling merge conflicts:** If conflicts arise during rebasing or merging, resolve them immediately. Incremental commits make conflict resolution easier since each commit is small and focused.
+
+   **Note:** Incremental commits use clean conventional messages without attribution footers. The final Phase 4 commit/PR includes the full attribution.
+
+3. **Follow Existing Patterns**
+
+   - The plan should reference similar code - read those files first
+   - Match naming conventions exactly
+   - Reuse existing components where possible
+   - Follow project coding standards (see CLAUDE.md)
+   - When in doubt, grep for similar implementations
+
+4. **Test Continuously**
+
+   - Run relevant tests after each significant change
+   - Don't wait until the end to test
+   - Fix failures immediately
+   - Add new tests for new functionality
+
+5. **Figma Design Sync** (if applicable)
+
+   For UI work with Figma designs:
+
+   - Implement components following design specs
+   - Use figma-design-sync agent iteratively to compare
+   - Fix visual differences identified
+   - Repeat until implementation matches design
+
+6. **Track Progress**
+   - Keep TodoWrite updated as you complete tasks
+   - Note any blockers or unexpected discoveries
+   - Create new tasks if scope expands
+   - Keep user informed of major milestones
+
+### Phase 3: Quality Check
+
+1. **Run Core Quality Checks**
+
+   Always run before submitting:
+
+   ```bash
+   # Run full test suite (use project's test command)
+   # Examples: bin/rails test, npm test, pytest, go test, etc.
+
+   # Run linting (per CLAUDE.md)
+   # Use linting-agent before pushing to origin
+   ```
+
+2. **Consider Reviewer Agents** (Optional)
+
+   Use for complex, risky, or large changes:
+
+   - **code-simplicity-reviewer**: Check for unnecessary complexity
+   - **kieran-rails-reviewer**: Verify Rails conventions (Rails projects)
+   - **performance-oracle**: Check for performance issues
+   - **security-sentinel**: Scan for security vulnerabilities
+   - **cora-test-reviewer**: Review test quality (Rails projects with comprehensive test coverage)
+
+   Run reviewers in parallel with Task tool:
+
+   ```
+   Task(code-simplicity-reviewer): "Review changes for simplicity"
+   Task(kieran-rails-reviewer): "Check Rails conventions"
+   ```
+
+   Present findings to user and address critical issues.
+
+3. **Final Validation**
+   - All TodoWrite tasks marked completed
+   - All tests pass
+   - Linting passes
+   - Code follows existing patterns
+   - Figma designs match (if applicable)
+   - No console errors or warnings
+
+### Phase 4: Ship It
+
+1. **Create Commit**
+
+   ```bash
+   git add .
+   git status  # Review what's being committed
+   git diff --staged  # Check the changes
+
+   # Commit with conventional format
+   git commit -m "$(cat <<'EOF'
+   feat(scope): description of what and why
+
+   Brief explanation if needed.
+
+   🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+   Co-Authored-By: Claude <noreply@anthropic.com>
+   EOF
+   )"
+   ```
+
+2. **Capture and Upload Screenshots for UI Changes** (REQUIRED for any UI work)
+
+   For **any** design changes, new views, or UI modifications, you MUST capture and upload screenshots:
+
+   **Step 1: Start dev server** (if not running)
+   ```bash
+   bin/dev  # Run in background
+   ```
+
+   **Step 2: Capture screenshots with agent-browser CLI**
+   ```bash
+   agent-browser open http://localhost:3000/[route]
+   agent-browser snapshot -i
+   agent-browser screenshot output.png
+   ```
+   See the `agent-browser` skill for detailed usage.
+
+   **Step 3: Upload using imgup skill**
+   ```bash
+   skill: imgup
+   # Then upload each screenshot:
+   imgup -h pixhost screenshot.png  # pixhost works without API key
+   # Alternative hosts: catbox, imagebin, beeimg
+   ```
+
+   **What to capture:**
+   - **New screens**: Screenshot of the new UI
+   - **Modified screens**: Before AND after screenshots
+   - **Design implementation**: Screenshot showing Figma design match
+
+   **IMPORTANT**: Always include uploaded image URLs in PR description. This provides visual context for reviewers and documents the change.
+
+3. **Create Pull Request**
+
+   ```bash
+   git push -u origin feature-branch-name
+
+   gh pr create --title "Feature: [Description]" --body "$(cat <<'EOF'
+   ## Summary
+   - What was built
+   - Why it was needed
+   - Key decisions made
+
+   ## Testing
+   - Tests added/modified
+   - Manual testing performed
+
+   ## Before / After Screenshots
+   | Before | After |
+   |--------|-------|
+   | ![before](URL) | ![after](URL) |
+
+   ## Figma Design
+   [Link if applicable]
+
+   ---
+
+   [![Compound Engineered](https://img.shields.io/badge/Compound-Engineered-6366f1)](https://github.com/EveryInc/compound-engineering-plugin) 🤖 Generated with [Claude Code](https://claude.com/claude-code)
+   EOF
+   )"
+   ```
+
+4. **Notify User**
+   - Summarize what was completed
+   - Link to PR
+   - Note any follow-up work needed
+   - Suggest next steps if applicable
+
+---
+
+## Swarm Mode (Optional)
+
+For complex plans with multiple independent workstreams, enable swarm mode for parallel execution with coordinated agents.
+
+### When to Use Swarm Mode
+
+| Use Swarm Mode when... | Use Standard Mode when... |
+|------------------------|---------------------------|
+| Plan has 5+ independent tasks | Plan is linear/sequential |
+| Multiple specialists needed (review + test + implement) | Single-focus work |
+| Want maximum parallelism | Simpler mental model preferred |
+| Large feature with clear phases | Small feature or bug fix |
+
+### Enabling Swarm Mode
+
+To trigger swarm execution, say:
+
+> "Make a Task list and launch an army of agent swarm subagents to build the plan"
+
+Or explicitly request: "Use swarm mode for this work"
+
+### Swarm Workflow
+
+When swarm mode is enabled, the workflow changes:
+
+1. **Create Team**
+   ```
+   Teammate({ operation: "spawnTeam", team_name: "work-{timestamp}" })
+   ```
+
+2. **Create Task List with Dependencies**
+   - Parse plan into TaskCreate items
+   - Set up blockedBy relationships for sequential dependencies
+   - Independent tasks have no blockers (can run in parallel)
+
+3. **Spawn Specialized Teammates**
+   ```
+   Task({
+     team_name: "work-{timestamp}",
+     name: "implementer",
+     subagent_type: "general-purpose",
+     prompt: "Claim implementation tasks, execute, mark complete",
+     run_in_background: true
+   })
+
+   Task({
+     team_name: "work-{timestamp}",
+     name: "tester",
+     subagent_type: "general-purpose",
+     prompt: "Claim testing tasks, run tests, mark complete",
+     run_in_background: true
+   })
+   ```
+
+4. **Coordinate and Monitor**
+   - Team lead monitors task completion
+   - Spawn additional workers as phases unblock
+   - Handle plan approval if required
+
+5. **Cleanup**
+   ```
+   Teammate({ operation: "requestShutdown", target_agent_id: "implementer" })
+   Teammate({ operation: "requestShutdown", target_agent_id: "tester" })
+   Teammate({ operation: "cleanup" })
+   ```
+
+See the `orchestrating-swarms` skill for detailed swarm patterns and best practices.
+
+---
+
+## Key Principles
+
+### Start Fast, Execute Faster
+
+- Get clarification once at the start, then execute
+- Don't wait for perfect understanding - ask questions and move
+- The goal is to **finish the feature**, not create perfect process
+
+### The Plan is Your Guide
+
+- Work documents should reference similar code and patterns
+- Load those references and follow them
+- Don't reinvent - match what exists
+
+### Test As You Go
+
+- Run tests after each change, not at the end
+- Fix failures immediately
+- Continuous testing prevents big surprises
+
+### Quality is Built In
+
+- Follow existing patterns
+- Write tests for new code
+- Run linting before pushing
+- Use reviewer agents for complex/risky changes only
+
+### Ship Complete Features
+
+- Mark all tasks completed before moving on
+- Don't leave features 80% done
+- A finished feature that ships beats a perfect feature that doesn't
+
+## Quality Checklist
+
+Before creating PR, verify:
+
+- [ ] All clarifying questions asked and answered
+- [ ] All TodoWrite tasks marked completed
+- [ ] Tests pass (run project's test command)
+- [ ] Linting passes (use linting-agent)
+- [ ] Code follows existing patterns
+- [ ] Figma designs match implementation (if applicable)
+- [ ] Before/after screenshots captured and uploaded (for UI changes)
+- [ ] Commit messages follow conventional format
+- [ ] PR description includes summary, testing notes, and screenshots
+- [ ] PR description includes Compound Engineered badge
+
+## When to Use Reviewer Agents
+
+**Don't use by default.** Use reviewer agents only when:
+
+- Large refactor affecting many files (10+)
+- Security-sensitive changes (authentication, permissions, data access)
+- Performance-critical code paths
+- Complex algorithms or business logic
+- User explicitly requests thorough review
+
+For most features: tests + linting + following patterns is sufficient.
+
+## Common Pitfalls to Avoid
+
+- **Analysis paralysis** - Don't overthink, read the plan and execute
+- **Skipping clarifying questions** - Ask now, not after building wrong thing
+- **Ignoring plan references** - The plan has links for a reason
+- **Testing at the end** - Test continuously or suffer later
+- **Forgetting TodoWrite** - Track progress or lose track of what's done
+- **80% done syndrome** - Finish the feature, don't move on early
+- **Over-reviewing simple changes** - Save reviewer agents for complex work
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me chronologically analyze the entire conversation:
+
+1. The conversation starts with the user invoking `/compound-engineering:workflows:brainstorm` with a description about form submission efficiency - users repeatedly submit similar forms changing only 1-5 fields.
+
+2. Brainstorm phase: Through a series of AskUserQuestion interactions, key decisions were made:
+   - Users: Known group of regular submitters
+   - Repetition: 1-5 fields change between submissions (inventory file, seller/brand partner, pricing, category)
+   - Identity: Email-based (later simplified to none needed)
+   - Resubmit flow: Ask what to keep (section-level checklist)
+   - History: Full history with clone capability
+   - Templates: Yes, named templates
+   - Storage: localStorage + Airtable (later simplified to all localStorage)
+   - Final scope: Smart resubmit + auto-saved history + named templates, all localStorage
+
+3. Brainstorm document written to `docs/brainstorms/2026-02-12-submission-efficiency-brainstorm.md`
+
+4. User then invoked `/compound-engineering:slfg` - a multi-step workflow:
+   - Step 1: Ralph loop activated
+   - Step 2: `/workflows:plan` - created comprehensive plan
+   - Step 3: `/compound-engineering:deepen-plan` - enhanced with 11 parallel research agents
+   - Step 4: `/workflows:work` with swarm mode - creating tasks and launching workers
+
+5. The plan was created at `docs/plans/2026-02-12-feat-submission-efficiency-plan.md` and then deepened with research from:
+   - TypeScript reviewer
+   - Performance oracle
+   - Security sentinel
+   - Code simplicity reviewer
+   - Frontend races reviewer
+   - Architecture strategist
+   - Pattern recognition specialist
+   - Best practices researcher
+   - Framework docs researcher
+   - Learnings researcher
+   - Frontend design agent
+
+6. Key technical decisions from deepening:
+   - Simplified from 4 new files to 1 new file (lib/storage.ts)
+   - Critical pre-req: fix bare watch() calls
+   - Scrub conditional fields BEFORE reset() not after
+   - Use key prop for LinkedRecordPicker remount
+   - Simplified data shapes
+   - Distinctive drawer design specs
+
+7. Swarm execution launched with 3 workers on team "submission-efficiency":
+   - Worker A: Tasks 1, 3, 7
+   - Worker B: Tasks 2, 6
+   - Worker C: Tasks 4, 5, 8, 9
+
+8. Current task status as of last check:
+   - Tasks 1-6, 8 completed
+   - Task 7 in progress (worker-a)
+   - Task 9 pending (blocked by 7)
+
+The SLFG workflow has remaining steps after work completes:
+- Step 5: /workflows:review (parallel)
+- Step 6: /compound-engineering:test-browser (parallel)
+- Step 7: /compound-engineering:resolve_todo_parallel
+- Step 8: /compound-engineering:feature-video
+- Step 9: Output DONE promise
+
+Let me now catalog all the files and technical details carefully.
+
+Summary:
+1. Primary Request and Intent:
+   The user invoked `/compound-engineering:slfg` (Swarm-enabled LFG), a multi-step automated workflow to brainstorm, plan, deepen, and implement a feature for their "submitalot" form application. The core problem: repeat submitters fill out ~40 fields but only change 1-5 between submissions, and currently every submission resets to blank. The user wants three localStorage-based features: (1) smart carry-forward on resubmit with section-level keep/clear checklist, (2) auto-saved submission history (last 20), and (3) named reusable templates. The SLFG workflow orchestrates: brainstorm → plan → deepen-plan → swarm work → review → test-browser → resolve TODOs → feature video → DONE promise.
+
+2. Key Technical Concepts:
+   - Next.js 15 App Router + React 19 + TypeScript
+   - react-hook-form v7.54+ with FormProvider, shouldUnregister: false, zodResolver
+   - localStorage for all persistence (no backend changes, no auth)
+   - 7-section stepped form with ~42 fields, conditional logic, linked record pickers
+   - `reset()` replaces entire form state (does not merge); use callback form for partial reset
+   - `watch()` without arguments subscribes to ALL fields causing O(n) re-renders per keystroke
+   - Key-based remount pattern for LinkedRecordPicker hydration (avoid useEffect sync antipattern)
+   - Scrub conditional fields BEFORE reset() to avoid render storm (1 render vs 11)
+   - `data` parameter from onSubmit is a frozen snapshot (use instead of getValues())
+   - `setSubmitted(false)` must be last call in carry-forward handler
+   - Safari private browsing throws on localStorage — need availability check
+   - Shape validation after JSON.parse (not just try/catch)
+   - CSS custom properties, vanilla CSS (no Tailwind), prefers-reduced-motion
+   - Drawer design: 340px overlay, segmented toggle, hover-reveal clone button, undo toast for delete
+   - Mobile: full-screen sheet from bottom at < 768px
+   - Ralph Wiggum loop active with completion promise "DONE"
+
+3. Files and Code Sections:
+
+   - `docs/brainstorms/2026-02-12-submission-efficiency-brainstorm.md`
+     - Created during brainstorm phase, captures all key decisions
+     - Documents: localStorage-only storage, section-level carry-forward, no auth needed, known user group
+
+   - `docs/plans/2026-02-12-feat-submission-efficiency-plan.md`
+     - The deepened implementation plan — the primary artifact driving the swarm work
+     - Contains 4 phases (0-3), types, implementation details, drawer design specs, risk analysis
+     - Key architecture: 1 new file (lib/storage.ts) + modifications to 4 existing files
+     - Types defined:
+     ```typescript
+     type LinkedRecordFieldName = keyof typeof LINKED_RECORD_FIELDS;
+     type SectionId = "primary" | "grading" | "inventory" | "location" | "logistics" | "pricing" | "restrictions";
+     
+     interface StoredSubmission {
+       version: 1;
+       formData: Partial<ItemizationFormData>;
+       linkedRecords: Partial<Record<LinkedRecordFieldName, LinkedRecord[]>>;
+     }
+     
+     interface HistoryEntry {
+       id: string;
+       timestamp: number;
+       data: StoredSubmission;
+     }
+     
+     interface Template {
+       id: string;
+       name: string;
+       createdAt: number;
+       data: StoredSubmission;
+     }
+     ```
+
+   - `lib/storage.ts` (NEW — being created by worker-a)
+     - localStorage CRUD, types, serialization, carry-forward merge logic (~80 lines)
+     - Functions: isStorageAvailable(), saveHistory(), getHistory(), saveTemplate(), getTemplates(), deleteTemplate(), buildCarryForwardValues()
+     - Shape validation on parse, strip file fields, strip metadata from linked records
+
+   - `lib/constants.ts` (MODIFIED by worker-c — Task #4 completed)
+     - Added SECTION_FIELD_MAP with `as const satisfies Record<SectionId, readonly FormFieldName[]>`
+     - Maps each section ID to ALL its fields (not just required ones)
+
+   - `lib/conditional-logic.ts` (MODIFIED by worker-c — Task #5 completed)
+     - Added scrubOrphanedFields() helper:
+     ```typescript
+     const CONDITIONAL_SCRUB_ORDER: FormFieldName[] = [
+       "inventoryType", "seller", "priceColumns", "flatOrReference", "listingDisaggregation",
+     ];
+     
+     export function scrubOrphanedFields(data: Partial<ItemizationFormData>): Partial<ItemizationFormData> {
+       const scrubbed = { ...data };
+       for (const parent of CONDITIONAL_SCRUB_ORDER) {
+         const value = scrubbed[parent];
+         if (typeof value === "string") {
+           const toClear = getFieldsToClear(parent, value);
+           for (const field of toClear) { delete scrubbed[field]; }
+         }
+       }
+       return scrubbed;
+     }
+     ```
+
+   - `components/form/fields/LinkedRecordPicker.tsx` (MODIFIED by worker-b — Tasks #2 and #6 completed)
+     - Task #2: Added generation counter to doSearch to discard stale responses
+     - Task #6: Added `initialRecords?: LinkedRecord[]` prop, initialized selectedRecords from it
+     - For single mode: initialize query state to record name from initialRecords
+
+   - `components/form/sections/PrimaryDetails.tsx` (MODIFIED by worker-a — Task #1 completed)
+     - Replaced bare `watch()` with targeted `watch("inventoryType")` and `watch("seller")`
+
+   - `components/form/sections/GradingDetails.tsx` (MODIFIED by worker-a — Task #1 completed)
+     - Replaced bare `watch()` with targeted `watch("inventoryType")`
+
+   - `components/form/sections/PricingSection.tsx` (MODIFIED by worker-a — Task #1 completed)
+     - Replaced bare `watch()` with targeted `watch("priceColumns")` and `watch("flatOrReference")`
+
+   - `components/form/FormStepper.tsx` (MODIFIED by worker-c — Task #8 completed)
+     - Fixed boolean completion check: `if (typeof value === "boolean") return true;` (was `return dirty`)
+
+   - `components/form/ItemizationForm.tsx` (BEING MODIFIED by worker-a — Task #7 in progress)
+     - Success screen carry-forward checklist, auto-save on submit, loadGeneration counter
+     - Key-based remount for LinkedRecordPickers via loadGeneration
+     - handleCarryForward flow: buildCarryForwardValues → scrubOrphanedFields → reset → increment loadGeneration → setCurrentSection(0) → setSubmitted(false) LAST
+
+   - `components/form/HistoryDrawer.tsx` (PENDING — Task #9)
+     - 340px slide-out drawer, segmented toggle, history + templates
+     - Lazy-load on open, hover-reveal clone, undo toast for delete, mobile full-screen from bottom
+
+   - `app/globals.css` (TO BE MODIFIED in Tasks #7 and #9)
+     - Drawer styles, animations, segmented toggle, entry styles, toast, edge fade masks
+
+4. Errors and Fixes:
+   - No runtime errors encountered during this session — the work is plan-driven development
+   - Pre-existing bugs identified during research and incorporated into the plan:
+     - Bare `watch()` calls causing 3x unnecessary re-renders (fixed in Task #1)
+     - Stale-response bug in LinkedRecordPicker doSearch (fixed in Task #2)
+     - Boolean completion check depending on dirtyFields after reset (fixed in Task #8)
+     - LinkedRecordPicker selectedRecords disconnected from form state (addressed via key-based remount in Task #6)
+   - User feedback during brainstorm: "i think it might be doing a too much saving all this stuff. i jsut want to do local cache/browser storage stuff" — simplified approach from Airtable history queries to all-localStorage
+
+5. Problem Solving:
+   - Solved the carry-forward architecture: section-level keep/clear, scrub BEFORE reset (not after) to avoid 11 renders
+   - Solved LinkedRecordPicker hydration: key-based remount with loadGeneration counter instead of error-prone useEffect sync
+   - Solved data shape simplification: removed LinkedRecordSnapshot wrapper, removed preview duplication, removed updatedAt (YAGNI)
+   - Solved file structure: reduced from 4 new files to 1 (lib/storage.ts) by putting SECTION_FIELD_MAP in constants.ts and scrubOrphanedFields in conditional-logic.ts
+   - Solved drawer UX: 340px overlay with segmented toggle, undo toast for delete (no confirmation dialog), inline template save input
+
+6. All User Messages:
+   - Initial brainstorm input: "one of the biggest points for people submitting this form is having to like do the same thing but just one different attribute. so i need to give more features and options for them to be able to submit more efficiently and faster. sometime sthey just need to switch the inventory file, sometimes they just want to maybe submit under the same seller, etc. theres a bunch of different avenues but being able to like rpefill submissions would be rly helpful and maybe a way for them to keep track or copy over historic submissions. maybe we give them a way to like have their own profile and track their submissions here? help me get this to a good spot then we will do the slfg"
+   - AskUserQuestion answers: "Known group", "1-3 fields change", "1-5 details id say", "Inventory file, Seller / Brand Partner, Pricing details, Category / product details", "Email-based", "Ask what to keep", "Yes, full history", "Yes, named templates", "localStorage + Airtable"
+   - Scope simplification: "i think it might be doing a too much saving all this stuff. i jsut want to do local cache/browser storage stuff so whatever works best but keeps the complexity low"
+   - Final scope approval: "Perfect, ship it"
+   - Next step: "Done for now" (for brainstorm)
+   - Then invoked `/compound-engineering:slfg` — the full SLFG workflow command with 9 sequential/parallel steps
+
+7. Pending Tasks:
+   - Task #7 (in_progress): Phase 2B: Modify success screen with carry-forward checklist (worker-a building)
+   - Task #9 (pending, blocked by #7): Phase 3: Build HistoryDrawer component with drawer UI
+   - After swarm work completes, SLFG steps 5-9 remain:
+     - Step 5: `/workflows:review` (spawn as background agent)
+     - Step 6: `/compound-engineering:test-browser` (spawn as background agent, parallel with step 5)
+     - Step 7: `/compound-engineering:resolve_todo_parallel`
+     - Step 8: `/compound-engineering:feature-video`
+     - Step 9: Output `<promise>DONE</promise>`
+   - Ralph Wiggum loop is active with completion promise "DONE"
+
+8. Current Work:
+   The swarm is executing the implementation plan. Three workers were launched on team "submission-efficiency":
+   - **Worker A** (worker-a): Completed Tasks #1 (watch fixes) and #3 (storage.ts). Currently working on Task #7 (success screen carry-forward checklist) — the largest remaining task involving modifications to ItemizationForm.tsx.
+   - **Worker B** (worker-b): Completed Tasks #2 (stale-response fix) and #6 (initialRecords prop). Now idle.
+   - **Worker C** (worker-c): Completed Tasks #4 (SECTION_FIELD_MAP), #5 (scrubOrphanedFields), and #8 (boolean fix). Waiting for Task #9 (HistoryDrawer) which is blocked by Task #7.
+   
+   Status: 7 of 9 tasks completed. Task #7 in progress, Task #9 pending.
+
+9. Optional Next Step:
+   Continue monitoring the swarm until Tasks #7 and #9 complete, then proceed with the SLFG workflow:
+   - After all 9 implementation tasks are done, launch Steps 5 and 6 in parallel as background agents: `/workflows:review` and `/compound-engineering:test-browser`
+   - Then Step 7: `/compound-engineering:resolve_todo_parallel`
+   - Then Step 8: `/compound-engineering:feature-video`
+   - Then output `<promise>DONE</promise>` to complete the Ralph loop
+   
+   The SLFG command specified: "After work completes, launch steps 5 and 6 as **parallel swarm agents** (both only need code to be written): 5. `/workflows:review` — spawn as background Task agent 6. `/compound-engineering:test-browser` — spawn as background Task agent. Wait for both to complete before continuing."
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/gabrielmurray/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
+
+---
+
+<task-notification>
+<task-id>af0a7a4</task-id>
+<status>completed</status>
+<summary>Agent "Code review of all changes" completed</summary>
+<result>I now have a thorough understanding of the entire changeset. Here is the structured review.
+
+---
+
+## Code Review: Carry-Forward, History Drawer, and Templates
+
+### CRITICAL
+
+**1. `extraFields` param in server action is not validated against allowlist**
+`/Users/gabrielmurray/dev/submitalot/app/actions/fetch-options.ts`, lines 14, 28
+
+The `table` and `displayField` are validated against `ALLOWED_CONFIGS`, but `extraFields` is passed straight through to the Airtable API. A caller could request arbitrary fields from the table (including sensitive fields not intended for the client). The `sort` param has the same issue -- `sort.field` is not validated.
+
+Fix: validate `extraFields` and `sort.field` against `config.previewFields` and `config.sortField` respectively.
+
+```typescript
+if (extraFields) {
+  const allowed = new Set(config.previewFields ?? []);
+  for (const f of extraFields) {
+    if (!allowed.has(f)) throw new Error("Invalid extra field");
+  }
+}
+if (sort && sort.field !== config.sortField) {
+  throw new Error("Invalid sort field");
+}
+```
+
+---
+
+**2. HistoryDrawer undo timer leaks on fast re-delete**
+`/Users/gabrielmurray/dev/submitalot/components/form/HistoryDrawer.tsx`, line 68
+
+The cleanup effect depends on `undoEntry` in its dependency array:
+
+```typescript
+useEffect(() => {
+  return () => { if (undoEntry) clearTimeout(undoEntry.timer); };
+}, [undoEntry]);
+```
+
+Every time `undoEntry` changes, the previous effect's cleanup fires and clears the *old* timer, then a new effect runs. But the new effect's cleanup won't fire until `undoEntry` changes again or the component unmounts. This works for the common case, but there is a subtle issue: when the drawer is closed (unmounted) while a delete is pending, the timer still fires `deleteTemplate(id)` and `setUndoEntry(null)`. The `setUndoEntry(null)` call on an unmounted component is a no-op in React 18+, but the `deleteTemplate(id)` call goes through, meaning you can't close the drawer to "escape" a pending deletion. This is a design decision you should be aware of -- if the intent is to always commit pending deletes even if the drawer closes, it's fine. If the user closing the drawer should cancel the pending delete, this is a bug.
+
+More concretely: when the component unmounts, the cleanup calls `clearTimeout(undoEntry.timer)`, but then the setTimeout callback won't fire, leaving the template in a ghost state -- removed from the `templates` state array but never actually deleted from localStorage. That is the real bug: the template disappears from the UI but persists in storage.
+
+Fix: either commit the delete in the cleanup, or restore the template to the array.
+
+---
+
+**3. `storageOk` is a ref, not state -- UI won't react to it**
+`/Users/gabrielmurray/dev/submitalot/components/form/ItemizationForm.tsx`, lines 125-126, 241
+
+```typescript
+const storageOk = useRef(false);
+useEffect(() => { storageOk.current = isStorageAvailable(); }, []);
+```
+
+The "History & Templates" button is conditionally rendered with `{storageOk.current && (...)}`. Since `storageOk` is a ref, updating it in `useEffect` does not trigger a re-render. On first render, `storageOk.current` is `false`, so the button never appears. The effect sets it to `true`, but no re-render occurs. The button only appears if something else triggers a re-render later (e.g., typing in the form).
+
+Fix: use `useState` instead of `useRef`, or call `isStorageAvailable()` synchronously during render (it's safe -- it's a try/catch around localStorage).
+
+```typescript
+const storageOk = isStorageAvailable(); // it's already memoized internally
+```
+
+---
+
+### WARNING
+
+**4. LinkedRecordPicker: `initialRecords` initializes state but doesn't update on carry-forward**
+`/Users/gabrielmurray/dev/submitalot/components/form/fields/LinkedRecordPicker.tsx`, lines 44-46, 53
+
+`useState(initialRecords ?? [])` only uses `initialRecords` for the initial value. The component is re-mounted via `key={...loadGeneration}`, which is the correct pattern. However, if `initialRecords` is `undefined` (field not in the carried-forward data), the component mounts with `[]` as its initial state, which is correct. But the `query` state at line 44-45 also only reads `initialRecords` during init:
+
+```typescript
+const [query, setQuery] = useState(
+  mode === "single" && initialRecords?.[0] ? initialRecords[0].name : ""
+);
+```
+
+This is fine because of the `key` prop causing remount. Just flagging that this pattern is fragile -- if someone removes the `key` prop later, the carry-forward breaks silently. A comment would help.
+
+---
+
+**5. `ALLOWED_CONFIGS` map key collision potential**
+`/Users/gabrielmurray/dev/submitalot/app/actions/fetch-options.ts`, lines 6-8
+
+```typescript
+const ALLOWED_CONFIGS = new Map(
+  Object.values(LINKED_RECORD_FIELDS).map((cfg) => [cfg.table, cfg])
+);
+```
+
+If two linked record fields point to the same Airtable table with different `displayField` values, only the last one wins. Currently there are three unique tables so it's fine, but this is a latent bug. A more robust key would be `${table}:${displayField}`.
+
+---
+
+**6. `scrubOrphanedFields` only handles string parent values**
+`/Users/gabrielmurray/dev/submitalot/lib/conditional-logic.ts`, lines 107-118
+
+```typescript
+if (typeof value === "string") {
+  const toClear = getFieldsToClear(parent, value);
+```
+
+This skips scrubbing if the parent field is `undefined` or a non-string value. If `inventoryType` is missing from carried-forward data (e.g., user deselected the primary section), both surplus and wholesale fields survive the scrub because the condition is never evaluated. These orphaned fields would then be submitted on the next submission.
+
+Fix: handle the `undefined` case explicitly. When the parent is missing, clear all conditional children.
+
+---
+
+**7. `useSectionStatus` calls `getValues` on every render**
+`/Users/gabrielmurray/dev/submitalot/components/form/FormStepper.tsx`, lines 20-42
+
+`getValues` doesn't trigger re-renders when form values change; it reads synchronously. The `errors` and `dirtyFields` from `formState` do subscribe to changes. But `getValues` is only a snapshot -- if a user fills in a field without triggering validation (e.g., just typing), the stepper status may lag until the next validation cycle. With `mode: "onBlur"`, this means the stepper won't update to "complete" until the user blurs the last required field. This might feel laggy.
+
+Not a bug per se, but worth noting for UX. Using `watch` instead of `getValues` would make it reactive, at the cost of more re-renders.
+
+---
+
+**8. Unused `dirty` variable in `useSectionStatus`**
+`/Users/gabrielmurray/dev/submitalot/components/form/FormStepper.tsx`, line 31
+
+```typescript
+const dirty = dirtyFields[f as keyof ItemizationFormData];
+```
+
+This variable is declared but never used. Dead code.
+
+---
+
+**9. `handleSaveTemplate` reads from `getTemplates()` synchronously after `saveTemplate`**
+`/Users/gabrielmurray/dev/submitalot/components/form/HistoryDrawer.tsx`, lines 82-89
+
+```typescript
+function handleSaveTemplate() {
+  const name = templateName.trim();
+  if (!name) return;
+  onSaveTemplate(name);
+  setSaving(false);
+  setTemplateName("");
+  setTemplates(getTemplates()); // re-reads from localStorage
+}
+```
+
+This works but `onSaveTemplate` is async-like in that it calls `saveTemplate` in the parent. If `saveTemplate` fails (returns `false`), the drawer still shows the template because it re-reads from localStorage (which was never updated). This means the UI stays consistent, but the user sees no feedback that the save failed. Not critical since localStorage failures are rare, but worth a toast/error state.
+
+---
+
+**10. Drawer is not focus-trapped**
+`/Users/gabrielmurray/dev/submitalot/components/form/HistoryDrawer.tsx`
+
+The drawer has `role="dialog"` and `aria-label`, which is good. But there's no focus trap -- a keyboard user can Tab out of the drawer back into the form behind the backdrop. Also, pressing Escape doesn't close the drawer.
+
+Accessibility best practice for modal dialogs requires:
+- Focus trap within the dialog while open
+- Escape key to close
+- Return focus to the trigger button on close
+
+---
+
+**11. `SectionContainer` uses `hidden` and `inert` but renders all children**
+`/Users/gabrielmurray/dev/submitalot/components/form/SectionContainer.tsx`, line 41-42
+
+```typescript
+hidden={!isActive}
+inert={!isActive ? true : undefined}
+```
+
+All 7 section components are rendered on every render, just hidden. This means all form fields are always in the DOM. Since `shouldUnregister: false` is set on the form, this is intentional -- fields need to stay mounted to retain their values. But it means every section re-renders when any form state changes. The `inert` attribute is a good touch for preventing interaction with hidden sections.
+
+---
+
+**12. `next` and `prev` callbacks have unnecessary dependency**
+`/Users/gabrielmurray/dev/submitalot/components/form/ItemizationForm.tsx`, lines 147-159
+
+```typescript
+const next = useCallback(() => {
+  if (currentSection < SECTION_DEFS.length - 1) {
+    setDirection("forward");
+    setCurrentSection((s) => s + 1);
+  }
+}, [currentSection]);
+```
+
+The `currentSection` dependency is needed for the guard `if (currentSection < ...)`, but `setCurrentSection((s) => s + 1)` uses the functional update pattern which doesn't need it. You could remove the dependency by using the functional form for the guard too:
+
+```typescript
+const next = useCallback(() => {
+  setCurrentSection((s) => {
+    if (s >= SECTION_DEFS.length - 1) return s;
+    setDirection("forward");
+    return s + 1;
+  });
+}, []);
+```
+
+This avoids re-creating the callback on every section change, which cascades to the form nav buttons re-rendering. Minor perf.
+
+---
+
+**13. Airtable formula injection partially mitigated**
+`/Users/gabrielmurray/dev/submitalot/app/actions/fetch-options.ts`, line 23
+
+```typescript
+const sanitized = query.replace(/["\\\n\r]/g, "");
+```
+
+This strips double quotes, backslashes, and newlines. But single quotes and parentheses are not stripped. Airtable formulas use `{fieldName}` syntax and function calls like `IF()`. A query containing `)` or `{` could potentially break the formula structure. The risk is low because the query is wrapped in `SEARCH(LOWER("..."), ...)` and Airtable's API is not SQL, but defense in depth suggests stripping or encoding more characters.
+
+---
+
+### NOTE
+
+**14. `confirm()` in `handleClone` blocks the main thread**
+`/Users/gabrielmurray/dev/submitalot/components/form/HistoryDrawer.tsx`, line 77
+
+```typescript
+if (currentFormDirty && !confirm("Load this data? Current form data will be replaced.")) return;
+```
+
+`window.confirm()` works but is jarring and doesn't match the polished UI elsewhere. Consider a custom confirmation dialog.
+
+---
+
+**15. CSS `fadeSlideIn` animation uses `max-height`**
+`/Users/gabrielmurray/dev/submitalot/app/globals.css`, lines 682-693
+
+```css
+@keyframes fadeSlideIn {
+  from {
+    max-height: 0;
+  }
+  to {
+    max-height: 500px;
+  }
+}
+```
+
+Animating `max-height` is a known performance anti-pattern -- it can't be composited on the GPU and triggers layout. Also, the `500px` cap is arbitrary -- if a conditional section is taller, it clips. Consider using `grid-template-rows: 0fr` -> `1fr` or just skip the max-height transition and rely on opacity/transform only.
+
+---
+
+**16. `sectionComponents` array rebuilt on every render**
+`/Users/gabrielmurray/dev/submitalot/components/form/ItemizationForm.tsx`, lines 207-215
+
+The `sectionComponents` array creates new JSX elements on every render. Since all sections are always mounted (hidden via `SectionContainer`), this means React reconciles all 7 sections every render. With `React.memo` on the section components this would be a non-issue, but currently none of them are memoized. For a 7-section form this is negligible, but worth noting.
+
+---
+
+**17. `previewFields` in `doSearch` dependency array triggers unnecessary re-creation**
+`/Users/gabrielmurray/dev/submitalot/components/form/fields/LinkedRecordPicker.tsx`, line 72
+
+```typescript
+[table, displayField, previewFields, sortField, sortDirection]
+```
+
+`previewFields` is an array prop. Every render from the parent creates a new array reference (e.g., `previewFields={["Email"]}`), causing `doSearch` to be re-created on every render, which is then passed as a dependency... to nothing directly harmful, but it's sloppy. Consider passing the config as a stable ref or memoizing in the parent.
+
+---
+
+**18. `handleUndo` restores template to state but not localStorage**
+`/Users/gabrielmurray/dev/submitalot/components/form/HistoryDrawer.tsx`, lines 109-118
+
+When you undo a deletion, the template is restored to the React state array and the timer is cleared. But it was already removed from the `templates` state (never from localStorage). Since `deleteTemplate` is only called after the 4-second timer, and we cleared that timer, localStorage still has the template. So this works correctly -- the UI state and localStorage stay in sync. Just making sure this was intentional.
+
+---
+
+**19. `relativeTime` uses `Date.now()` which is not reactive**
+`/Users/gabrielmurray/dev/submitalot/components/form/HistoryDrawer.tsx`, line 24
+
+The "5m ago" text computed in `relativeTime` is calculated once when the drawer opens and never updates while the drawer stays open. If a user keeps the drawer open for minutes, the timestamps go stale. Not a real issue in practice.
+
+---
+
+**20. `itemizationType` field still in `ItemizationFormData` type but commented out from schema**
+`/Users/gabrielmurray/dev/submitalot/lib/types.ts`, line 168 vs `/Users/gabrielmurray/dev/submitalot/lib/schema.ts` (commented out)
+
+The type still declares `itemizationType: ItemizationType` but the Zod schema has it commented out. This means the type is wider than what's actually validated. If someone submits data with `itemizationType` set, it passes TypeScript checks but the field is ignored by Zod validation. Not breaking, but the type and schema are out of sync.
+
+---
+
+### Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 3 |
+| Warning | 10 |
+| Note | 7 |
+
+The three critical items to address before shipping:
+1. **Server action field validation** -- `extraFields` and `sort` are unsanitized server-side inputs
+2. **Undo timer ghost deletion** -- closing the drawer mid-undo leaves templates in a broken state (removed from UI, still in localStorage)
+3. **`storageOk` ref never triggers re-render** -- the History & Templates button won't appear on first render</result>
+<usage>total_tokens: 81646
+tool_uses: 27
+duration_ms: 161383</usage>
+</task-notification>
+Full transcript available at: /private/tmp/claude-501/-Users-gabrielmurray-dev-submitalot/tasks/af0a7a4.output
+
+---
+
+This session is being continued from a previous conversation that ran out of context. The summary below covers the earlier portion of the conversation.
+
+Analysis:
+Let me analyze the conversation chronologically:
+
+1. **Context from previous session**: The conversation was continued from a previous session that ran out of context. The summary tells us about a brainstorm → plan → deepen → swarm work flow for "submission efficiency" features. The SLFG (Swarm-enabled LFG) workflow was in progress with 9 implementation tasks, 7 completed, Task #7 in progress, Task #9 pending.
+
+2. **This session starts**: I checked the task list and found Tasks #7 and #9 remaining. Workers appeared stalled.
+
+3. **File reads**: I read all the key files to understand current state:
+   - lib/storage.ts (completed by worker-a, Task #3)
+   - lib/constants.ts (completed by worker-c, Task #4 - SECTION_FIELD_MAP added)
+   - lib/conditional-logic.ts (completed by worker-c, Task #5 - scrubOrphanedFields added)
+   - LinkedRecordPicker.tsx (completed by worker-b, Tasks #2 and #6)
+   - ItemizationForm.tsx (initially appeared unchanged)
+   - FormStepper.tsx
+   - PrimaryDetails.tsx (already had loadGeneration, initialRecords props)
+   - RestrictionsListing.tsx (already had loadGeneration, initialRecords props)
+   - lib/linked-records.ts
+   - lib/types.ts
+   - app/globals.css
+
+4. **Task #7 completed by worker-a**: On re-reading ItemizationForm.tsx, Task #7 was actually completed with carry-forward logic including: loadGeneration state, lastSubmitted state, keptSections state, linkedRecordsRef, handleCarryForward, handleStartFresh, toggleSection, success screen with section checklist.
+
+5. **Task #9 - HistoryDrawer**: I built this myself:
+   - Created components/form/HistoryDrawer.tsx
+   - Added drawer styles to globals.css
+   - Added form-sidebar wrapper CSS
+   - Integrated drawer into ItemizationForm.tsx (imports, state, handlers, render)
+   - Added mobile styles (full-screen sheet from bottom)
+   - Build passed successfully
+
+6. **Swarm cleanup**: Shut down workers a, b, c. Deleted the team.
+
+7. **SLFG Steps 5 & 6 (parallel)**: Launched review agent and browser test agent in background.
+
+8. **Review agent completed** with 3 critical, 10 warning, 7 note findings:
+   - Critical #1: extraFields/sort params not validated in server action
+   - Critical #2: Undo timer ghost deletion on drawer close
+   - Critical #3: storageOk ref never triggers re-render
+
+9. **Fixes applied**:
+   - Fix 1: Changed `storageOk` from `useRef` + `useEffect` to direct `isStorageAvailable()` call
+   - Fix 2: Changed undo timer cleanup to commit pending deletion on drawer close
+   - Fix 3: Added validation for extraFields and sort.field against config in fetch-options.ts
+   - Also fixed: unused `dirty` variable in FormStepper, undefined parent handling in scrubOrphanedFields, added Escape key support for drawer
+   - Removed unused useEffect import from ItemizationForm.tsx
+
+10. **Build verification**: TypeScript check and Next.js build both passed after fixes.
+
+11. **Plan checkboxes**: Updated all checkboxes in the plan file to [x].
+
+12. **Commit**: Created commit on feat/submission-efficiency branch with all implementation work.
+
+13. **Browser test agent completed**: Found a critical hydration mismatch bug - `isStorageAvailable()` returns different values on server vs client (localStorage doesn't exist on server). This causes the drawer-trigger button to only render on client, creating 26 hydration errors in dev mode.
+
+14. **SLFG workflow status**:
+   - Step 1: Ralph loop ✓
+   - Step 2: Plan ✓
+   - Step 3: Deepen plan ✓
+   - Step 4: Swarm work ✓
+   - Step 5: Review ✓ (findings addressed)
+   - Step 6: Browser test ✓ (hydration bug found, NOT yet fixed)
+   - Step 7: Resolve TODOs ✓ (no TODOs found)
+   - Step 8: Feature video - NOT DONE
+   - Step 9: Output DONE promise - NOT DONE
+
+The hydration mismatch bug from the browser test still needs fixing. Then feature video and DONE promise.
+
+The Ralph Wiggum loop is active with completion promise "DONE".
+
+Summary:
+1. Primary Request and Intent:
+   The user invoked `/compound-engineering:slfg` — a multi-step automated workflow (Swarm-enabled LFG) to brainstorm, plan, deepen, and implement a "submission efficiency" feature for their "submitalot" form application. The core problem: repeat submitters fill out ~40 fields but only change 1-5 between submissions, and currently every submission resets to blank. Three localStorage-based features were designed: (1) smart carry-forward with section-level keep/clear checklist, (2) auto-saved submission history (last 20), and (3) named reusable templates. The SLFG workflow orchestrates 9 steps: ralph-loop → plan → deepen-plan → swarm work → review → test-browser → resolve TODOs → feature video → DONE promise. A Ralph Wiggum loop is active with completion promise "DONE" — the loop continues until all slash commands are finished and DONE is genuinely true.
+
+2. Key Technical Concepts:
+   - Next.js 15 App Router + React 19 + TypeScript
+   - react-hook-form v7.54+ with FormProvider, shouldUnregister: false, zodResolver
+   - localStorage for all persistence (no backend changes, no auth)
+   - 7-section stepped form with ~42 fields, conditional logic, linked record pickers
+   - `reset()` replaces entire form state (does not merge); use callback form for partial reset
+   - `watch()` without arguments subscribes to ALL fields — must use targeted watches
+   - Key-based remount pattern (`key={name-${loadGeneration}}`) for LinkedRecordPicker hydration
+   - Scrub conditional fields BEFORE `reset()` to avoid render storm (1 render vs 11)
+   - `data` parameter from `onSubmit` is a frozen snapshot (use instead of `getValues()`)
+   - `setSubmitted(false)` must be last call in carry-forward handler
+   - Safari private browsing throws on localStorage — need availability check
+   - Shape validation after JSON.parse (not just try/catch)
+   - CSS custom properties, vanilla CSS (no Tailwind), prefers-reduced-motion
+   - Drawer design: 340px overlay, segmented toggle, hover-reveal clone button, undo toast for delete
+   - Mobile: full-screen sheet from bottom at < 768px
+   - Server-side rendering hydration mismatch: `isStorageAvailable()` returns false on server, true on client
+   - `useRef` does NOT trigger re-renders when mutated — cannot use for conditional rendering
+
+3. Files and Code Sections:
+
+   - `docs/brainstorms/2026-02-12-submission-efficiency-brainstorm.md`
+     - Documents all key decisions from brainstorm phase
+     - localStorage-only storage, section-level carry-forward, no auth needed
+
+   - `docs/plans/2026-02-12-feat-submission-efficiency-plan.md`
+     - The deepened implementation plan driving all work
+     - Contains 4 phases (0-3), types, implementation details, drawer design specs
+     - All implementation checkboxes marked as [x] complete
+
+   - `lib/storage.ts` (CREATED — Task #3 by worker-a)
+     - localStorage CRUD, types, serialization, carry-forward merge logic
+     - Key types and exports:
+     ```typescript
+     export type LinkedRecordFieldName = keyof typeof LINKED_RECORD_FIELDS;
+     export interface StoredSubmission { version: 1; formData: Partial<ItemizationFormData>; linkedRecords: Partial<Record<LinkedRecordFieldName, LinkedRecord[]>>; }
+     export interface HistoryEntry { id: string; timestamp: number; data: StoredSubmission; }
+     export interface Template { id: string; name: string; createdAt: number; data: StoredSubmission; }
+     export function isStorageAvailable(): boolean  // try/catch localStorage with memoization
+     export function saveHistory(data, linkedRecords): boolean
+     export function getHistory(): HistoryEntry[]
+     export function saveTemplate(name, data, linkedRecords): boolean
+     export function getTemplates(): Template[]
+     export function deleteTemplate(id: string): boolean
+     export function buildCarryForwardValues(lastData, keptSections, sectionFieldMap?): Partial<ItemizationFormData>
+     ```
+
+   - `lib/constants.ts` (MODIFIED — Task #4 by worker-c)
+     - Added SECTION_FIELD_MAP with `as const satisfies Record<SectionId, readonly FormFieldName[]>`
+     ```typescript
+     export const SECTION_FIELD_MAP = {
+       primary: ["brandPartner", "seller", "newSellerId", "inventoryFile", "additionalFiles", "inventoryType"],
+       grading: ["productAssortment", "inventoryCondition", "overallListingRating", ...],
+       inventory: ["categoryGroups", "inventoryExclusivity", "paperwork", ...],
+       location: ["region", "state", "city"],
+       logistics: ["minimumOrder", "packagingType", ...],
+       pricing: ["currencyType", "inlandFreight", "marginTakeRate", ...],
+       restrictions: ["listingDisaggregation", "customDisaggregation", "stealth", ...],
+     } as const satisfies Record<SectionId, readonly FormFieldName[]>;
+     ```
+
+   - `lib/conditional-logic.ts` (MODIFIED — Task #5 by worker-c, then fixed during review)
+     - Added `scrubOrphanedFields()` helper; later fixed to handle undefined parent values
+     ```typescript
+     export function scrubOrphanedFields(data: Partial<ItemizationFormData>): Partial<ItemizationFormData> {
+       const scrubbed = { ...data };
+       for (const parent of CONDITIONAL_SCRUB_ORDER) {
+         const value = scrubbed[parent];
+         if (typeof value === "string") {
+           const toClear = getFieldsToClear(parent, value);
+           for (const field of toClear) { delete scrubbed[field]; }
+         } else if (value === undefined) {
+           const toClear = getFieldsToClear(parent, "");
+           for (const field of toClear) { delete scrubbed[field]; }
+         }
+       }
+       return scrubbed;
+     }
+     ```
+
+   - `components/form/fields/LinkedRecordPicker.tsx` (MODIFIED — Tasks #2, #6 by worker-b)
+     - Added generation counter to doSearch for stale response fix
+     - Added `initialRecords?: LinkedRecord[]` prop
+     - Initialized selectedRecords and query from initialRecords
+     - Key-based remount via parent's `key={name-${loadGeneration}}`
+
+   - `components/form/sections/PrimaryDetails.tsx` (MODIFIED — Task #1 by worker-a)
+     - Replaced bare `watch()` with targeted `watch("seller")`
+     - Added `onRecordsChange`, `initialRecords`, `loadGeneration` props
+     - Uses `key={brandPartner-${loadGeneration}}` and `key={seller-${loadGeneration}}` on LinkedRecordPickers
+
+   - `components/form/sections/RestrictionsListing.tsx` (MODIFIED)
+     - Same prop additions as PrimaryDetails for linked record hydration
+     - Uses `key={restrictionsCompany-${loadGeneration}}`
+
+   - `components/form/sections/GradingDetails.tsx` (MODIFIED — Task #1)
+     - Replaced bare `watch()` with targeted `watch("inventoryType")`
+
+   - `components/form/sections/PricingSection.tsx` (MODIFIED — Task #1)
+     - Replaced bare `watch()` with targeted `watch("priceColumns")` and `watch("flatOrReference")`
+
+   - `components/form/FormStepper.tsx` (MODIFIED — Task #8 by worker-c, then cleaned during review)
+     - Fixed boolean completion check: `if (typeof value === "boolean") return true;`
+     - Removed unused `dirty` variable and `dirtyFields` destructuring
+
+   - `components/form/ItemizationForm.tsx` (MODIFIED — Task #7 by worker-a, then Task #9 integration + review fixes by me)
+     - Major changes: carry-forward logic, drawer integration, storage integration
+     - Key state: `loadGeneration`, `lastSubmitted`, `keptSections`, `drawerOpen`
+     - `storageOk` changed from `useRef` + `useEffect` to direct `isStorageAvailable()` call (review fix)
+     - Handlers: `handleRecordsChange`, `handleCarryForward`, `handleStartFresh`, `handleCloneEntry`, `handleSaveCurrentAsTemplate`, `toggleSection`
+     - Success screen with section-level keep/clear checklist
+     - Added `form-sidebar` wrapper div for stepper + drawer trigger
+     - HistoryDrawer component rendered at bottom of FormProvider
+     ```typescript
+     const storageOk = isStorageAvailable(); // was useRef + useEffect, fixed during review
+     // ...
+     <HistoryDrawer
+       open={drawerOpen}
+       onClose={() => setDrawerOpen(false)}
+       onClone={handleCloneEntry}
+       onSaveTemplate={handleSaveCurrentAsTemplate}
+       currentFormDirty={methods.formState.isDirty}
+     />
+     ```
+
+   - `components/form/HistoryDrawer.tsx` (CREATED — Task #9 by me)
+     - 340px slide-out drawer with segmented toggle (Recent/Templates)
+     - Lazy-loads from localStorage on open
+     - History entries with preview (brand/seller) + relative time + hover-reveal clone button
+     - Template entries with load + delete buttons
+     - Inline save template input (expand on click, Enter to save, Escape to cancel)
+     - 4-second undo toast for template deletion
+     - Escape key closes drawer
+     - Undo timer commits pending deletion on drawer close (review fix)
+     ```typescript
+     // Commit pending deletion on drawer close/unmount
+     const undoRef = useRef(undoEntry);
+     undoRef.current = undoEntry;
+     useEffect(() => {
+       if (!open && undoRef.current) {
+         clearTimeout(undoRef.current.timer);
+         deleteTemplate(undoRef.current.template.id);
+         setUndoEntry(null);
+       }
+     }, [open]);
+     ```
+
+   - `app/actions/fetch-options.ts` (MODIFIED — review fix)
+     - Added validation for `extraFields` against `config.previewFields`
+     - Added validation for `sort.field` against `config.sortField`
+     ```typescript
+     const allowedExtra = new Set(config.previewFields ?? []);
+     if (extraFields) {
+       for (const f of extraFields) {
+         if (!allowedExtra.has(f)) throw new Error("Invalid extra field");
+       }
+     }
+     if (sort && sort.field !== config.sortField) {
+       throw new Error("Invalid sort field");
+     }
+     ```
+
+   - `app/globals.css` (MODIFIED — Tasks #7 and #9)
+     - Added `.form-sidebar` styles (replaces form-stepper width/sticky)
+     - Added complete drawer styles: `.drawer-backdrop`, `.drawer-panel`, `.drawer-header`, `.drawer-tabs`, `.drawer-tab`, `.drawer-close`, `.drawer-body`, `.drawer-entry`, `.drawer-entry-info`, `.drawer-entry-primary`, `.drawer-entry-secondary`, `.drawer-entry-action`, `.drawer-template-save`, `.drawer-save-btn`, `.drawer-save-input`, `.drawer-save-confirm`, `.drawer-toast`, `.drawer-toast-undo`, `.drawer-trigger`
+     - Added animations: `toastIn` keyframes, `prefers-reduced-motion` guard
+     - Added touch device override (always show action buttons)
+     - Mobile styles: drawer becomes full-screen from bottom, form-sidebar becomes horizontal
+
+   - `lib/types.ts` (MODIFIED — from previous session)
+     - Added `SectionId` type
+
+4. Errors and Fixes:
+   - **Critical #1: Server action field validation** — `extraFields` and `sort.field` passed unsanitized to Airtable API. Fixed by validating against `config.previewFields` and `config.sortField` allowlists in `app/actions/fetch-options.ts`.
+   - **Critical #2: Undo timer ghost deletion on drawer close** — Closing drawer mid-undo left templates removed from UI state but still in localStorage (ghost state). Fixed by changing cleanup effect to commit pending deletion when `open` becomes false.
+   - **Critical #3: `storageOk` ref never triggers re-render** — Using `useRef(false)` with `useEffect` meant the drawer trigger button never appeared on first render. Fixed by calling `isStorageAvailable()` directly during render (it's already memoized internally). Also removed unused `useEffect` import.
+   - **Warning #6: scrubOrphanedFields only handles string parents** — If a parent field is `undefined` (section deselected), conditional children survive scrub. Fixed by adding `else if (value === undefined)` branch that clears all possible children.
+   - **Warning #8: Unused `dirty` variable in FormStepper** — Removed `dirtyFields` from destructuring and the unused `dirty` variable declaration.
+   - **Warning #10: Drawer not keyboard-accessible** — Added Escape key listener to close drawer when open.
+   - **Hydration mismatch (from browser test)** — `isStorageAvailable()` returns `false` on server (no `localStorage`), `true` on client, causing 26 hydration errors for the drawer-trigger button. **NOT YET FIXED**.
+
+5. Problem Solving:
+   - Solved carry-forward architecture: section-level keep/clear checklist, scrub BEFORE reset (not after) for 1 render vs 11
+   - Solved LinkedRecordPicker hydration via key-based remount with `loadGeneration` counter
+   - Solved undo toast lifecycle: commit pending deletes on drawer close rather than relying on component unmount cleanup
+   - Solved server action security: validate all user-supplied field names against config allowlists
+   - Solved conditional field orphaning when parent is undefined (not just when parent has a different string value)
+   - **Unsolved**: Hydration mismatch from `isStorageAvailable()` — needs to be wrapped in a client-only check (e.g., `useState(false)` + `useEffect` to set true on mount, or dynamic import, or suppressing hydration warning)
+
+6. All User Messages:
+   - The user did not send any explicit messages in this session. The session was a continuation from context compaction, and the system instructed: "Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on."
+   - From the previous session (preserved in summary):
+     - Initial brainstorm input about form submission efficiency and prefilling
+     - Various AskUserQuestion answers: "Known group", "1-3 fields change", "1-5 details", specific field categories, "Email-based", "Ask what to keep", "Yes full history", "Yes named templates", "localStorage + Airtable"
+     - Scope simplification: "i think it might be doing a too much saving all this stuff. i jsut want to do local cache/browser storage stuff so whatever works best but keeps the complexity low"
+     - Final scope approval: "Perfect, ship it"
+     - "Done for now" (for brainstorm)
+     - Then invoked `/compound-engineering:slfg`
+
+7. Pending Tasks:
+   - **Fix hydration mismatch bug**: `isStorageAvailable()` causes server/client mismatch for drawer-trigger button. Needs client-only rendering solution.
+   - **SLFG Step 8**: `/compound-engineering:feature-video` — Record a video walkthrough of the feature and add to PR
+   - **SLFG Step 9**: Output `<promise>DONE</promise>` when video is in PR
+   - **Create Pull Request**: Code is committed on `feat/submission-efficiency` branch but PR hasn't been created yet
+   - Ralph Wiggum loop is active with completion promise "DONE" — must output `<promise>DONE</promise>` when all slash commands are genuinely finished
+
+8. Current Work:
+   The implementation is complete and committed on `feat/submission-efficiency` (commit `a4decc4`). The code review (SLFG Step 5) findings were all addressed and committed. The browser test (SLFG Step 6) completed and found a **hydration mismatch bug** — `isStorageAvailable()` accesses `localStorage` which doesn't exist on the server, causing the drawer-trigger button to render differently server vs client, producing 26 hydration errors. The SLFG Step 7 (resolve TODOs) found no TODOs. Steps 8 (feature video) and 9 (DONE promise) remain.
+
+   The commit includes 26 files changed, 3529 insertions, 149 deletions across:
+   - 1 new core file: `lib/storage.ts`
+   - 1 new component: `components/form/HistoryDrawer.tsx`
+   - Modified: ItemizationForm.tsx, FormStepper.tsx, LinkedRecordPicker.tsx, fetch-options.ts, globals.css, conditional-logic.ts, constants.ts, types.ts, PrimaryDetails.tsx, GradingDetails.tsx, PricingSection.tsx, RestrictionsListing.tsx, and others
+
+9. Optional Next Step:
+   Fix the hydration mismatch bug discovered by the browser test agent. The issue is that `const storageOk = isStorageAvailable()` in `ItemizationForm.tsx` calls `localStorage` during server-side rendering where it doesn't exist, returning `false` on server but `true` on client. This needs a client-only rendering approach (e.g., `useState(false)` + `useEffect(() => setStorageOk(isStorageAvailable()), [])` or wrapping the drawer trigger in a client-only boundary). After fixing, proceed with SLFG Step 8 (feature video), Step 9 (DONE promise), and PR creation. The SLFG workflow specified: "After work completes, launch steps 5 and 6 as parallel swarm agents... Wait for both to complete before continuing." — both are complete. Next: "7. `/compound-engineering:resolve_todo_parallel`" (done, no TODOs), "8. `/compound-engineering:feature-video`", "9. Output `<promise>DONE</promise>` when video is in PR".
+
+If you need specific details from before compaction (like exact code snippets, error messages, or content you generated), read the full transcript at: /Users/gabrielmurray/.REDACTED.jsonl
+Please continue the conversation from where we left off without asking the user any further questions. Continue with the last task that you were asked to work on.
