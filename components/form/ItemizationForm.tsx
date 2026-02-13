@@ -2,7 +2,7 @@
 
 import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useCallback, useRef, type ReactNode } from "react";
+import { useState, useCallback, useRef, useEffect, type ReactNode } from "react";
 import { itemizationSchema } from "@/lib/schema";
 import { FORM_DEFAULTS, SECTION_FIELD_MAP } from "@/lib/constants";
 import type { ItemizationFormData, FormFieldName, SectionId, LinkedRecord } from "@/lib/types";
@@ -63,7 +63,8 @@ export function ItemizationForm() {
   const [keptSections, setKeptSections] = useState<Set<SectionId>>(new Set(SECTION_DEFS.map((s) => s.id)));
 
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const storageOk = isStorageAvailable();
+  const [storageOk, setStorageOk] = useState(false);
+  useEffect(() => { setStorageOk(isStorageAvailable()); }, []);
 
   const linkedRecordsRef = useRef<Partial<Record<LinkedRecordFieldName, LinkedRecord[]>>>({});
 
