@@ -15,6 +15,11 @@ interface LinkedRecordPickerProps {
   required?: boolean;
   placeholder?: string;
   onChange?: (value: string) => void;
+  onRecordsChange?: (records: LinkedRecord[]) => void;
+  previewFields?: string[];
+  sortField?: string;
+  sortDirection?: "asc" | "desc";
+  initialRecords?: LinkedRecord[];
 }
 
 export function LinkedRecordPicker({
@@ -26,38 +31,45 @@ export function LinkedRecordPicker({
   required,
   placeholder,
   onChange,
+  onRecordsChange,
+  previewFields,
+  sortField,
+  sortDirection,
+  initialRecords,
 }: LinkedRecordPickerProps) {
   const { setValue, watch, formState: { errors } } = useFormContext<ItemizationFormData>();
   const helper = HELPER_TEXT[name];
   const error = errors[name];
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(
+    mode === "single" && initialRecords?.[0] ? initialRecords[0].name : ""
+  );
   const [results, setResults] = useState<LinkedRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Current value(s)
-  const rawValue = watch(name);
-
-  // For single mode: value is a string (the name displayed, ID stored separately)
-  // For multi mode: value is string[] of IDs, we track display names locally
-  const [selectedRecords, setSelectedRecords] = useState<LinkedRecord[]>([]);
+  const [selectedRecords, setSelectedRecords] = useState<LinkedRecord[]>(initialRecords ?? []);
+  const searchGenRef = useRef(0);
 
   const doSearch = useCallback(
     async (q: string) => {
+      const gen = ++searchGenRef.current;
       setLoading(true);
       try {
-        const data = await searchLinkedRecords(table, displayField, q);
+        const sort = sortField ? { field: sortField, direction: sortDirection ?? ("asc" as const) } : undefined;
+        const data = await searchLinkedRecords(table, displayField, q, previewFields, sort);
+        if (gen !== searchGenRef.current) return;
         setResults(data);
       } catch {
+        if (gen !== searchGenRef.current) return;
         setResults([]);
       } finally {
-        setLoading(false);
+        if (gen === searchGenRef.current) setLoading(false);
       }
     },
-    [table, displayField]
+    [table, displayField, previewFields, sortField, sortDirection]
   );
 
   function handleInputChange(value: string) {
@@ -68,11 +80,18 @@ export function LinkedRecordPicker({
     debounceRef.current = setTimeout(() => doSearch(value), 300);
   }
 
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
   function handleSelect(record: LinkedRecord) {
     if (mode === "single") {
       setQuery(record.name);
       setValue(name, record.name as never, { shouldValidate: true });
       onChange?.(record.name);
+      onRecordsChange?.([record]);
       setOpen(false);
     } else {
       const current = selectedRecords;
@@ -80,6 +99,7 @@ export function LinkedRecordPicker({
         const next = [...current, record];
         setSelectedRecords(next);
         setValue(name, next.map((r) => r.id) as never, { shouldValidate: true });
+        onRecordsChange?.(next);
       }
       setQuery("");
       setOpen(false);
@@ -90,9 +110,9 @@ export function LinkedRecordPicker({
     const next = selectedRecords.filter((r) => r.id !== id);
     setSelectedRecords(next);
     setValue(name, next.map((r) => r.id) as never, { shouldValidate: true });
+    onRecordsChange?.(next);
   }
 
-  // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -103,13 +123,14 @@ export function LinkedRecordPicker({
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Load initial results on focus
   function handleFocus() {
     if (results.length === 0 && !loading) {
       doSearch(query);
     }
     setOpen(true);
   }
+
+  const isSelected = (id: string) => selectedRecords.some((s) => s.id === id);
 
   return (
     <div className="field-group" ref={containerRef}>
@@ -143,7 +164,13 @@ export function LinkedRecordPicker({
 
         {open && (
           <div className="picker-dropdown">
-            {loading && <div className="picker-item picker-loading">Searching...</div>}
+            {loading && (
+              <>
+                <div className="picker-skeleton"><div className="picker-skeleton-line picker-skeleton-primary" /><div className="picker-skeleton-line picker-skeleton-secondary" /></div>
+                <div className="picker-skeleton"><div className="picker-skeleton-line picker-skeleton-primary" /><div className="picker-skeleton-line picker-skeleton-secondary" /></div>
+                <div className="picker-skeleton"><div className="picker-skeleton-line picker-skeleton-primary" /><div className="picker-skeleton-line picker-skeleton-secondary" /></div>
+              </>
+            )}
             {!loading && results.length === 0 && query && (
               <div className="picker-item picker-empty">No results</div>
             )}
@@ -151,17 +178,27 @@ export function LinkedRecordPicker({
               results
                 .filter((r) =>
                   mode === "multi"
-                    ? !selectedRecords.find((s) => s.id === r.id)
+                    ? !isSelected(r.id)
                     : true
                 )
                 .map((r) => (
                   <button
                     key={r.id}
                     type="button"
-                    className="picker-item"
+                    className="picker-item-rich"
                     onClick={() => handleSelect(r)}
                   >
-                    {r.name}
+                    {mode === "multi" && isSelected(r.id) && (
+                      <span className="picker-item-check">&#10003;</span>
+                    )}
+                    <span className="picker-item-primary">{r.name}</span>
+                    {r.metadata && Object.keys(r.metadata).length > 0 && (
+                      <span className="picker-item-meta">
+                        {Object.entries(r.metadata).map(([k, v]) => (
+                          <span key={k}>{k}: {v}</span>
+                        ))}
+                      </span>
+                    )}
                   </button>
                 ))}
           </div>

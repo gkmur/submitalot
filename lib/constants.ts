@@ -4,7 +4,7 @@ import type {
   LocationSurplus, LocationWholesale, RestrictionsSurplus, RestrictionsWholesale,
   CategoryGroup, InventoryExclusivity, Paperwork, PackagingType,
   InventoryAvailability, LeadTimeInterval, PriceColumns, ListingDisaggregation,
-  ItemizationFormData,
+  ItemizationFormData, FormFieldName, SectionId,
 } from "./types";
 
 // ─── Radio Option Type ────────────────────────────────────────────────────────
@@ -250,6 +250,18 @@ export const FORM_DEFAULTS: Partial<ItemizationFormData> = {
   restrictionsBuyerType: [],
   restrictionsRegion: [],
 };
+
+// ─── Section → Field Mapping ─────────────────────────────────────────────────
+
+export const SECTION_FIELD_MAP = {
+  primary: ["brandPartner", "seller", "newSellerId", "inventoryFile", "additionalFiles", "inventoryType"],
+  grading: ["productAssortment", "inventoryCondition", "overallListingRating", "pricingStrengthSurplus", "pricingStrengthWholesale", "brandDemandSurplus", "brandDemandWholesale", "locationSurplus", "locationWholesale", "restrictionsSurplus", "restrictionsWholesale"],
+  inventory: ["categoryGroups", "inventoryExclusivity", "paperwork", "tagPresets", "allTags", "inventoryNotes"],
+  location: ["region", "state", "city"],
+  logistics: ["minimumOrder", "packagingType", "packagingDetails", "inventoryAvailability", "fobOrExw", "leadTimeNumber", "leadTimeInterval"],
+  pricing: ["currencyType", "inlandFreight", "marginTakeRate", "priceColumns", "sellerPriceColumn", "buyerPriceColumn", "flatOrReference", "referencePriceColumn", "increaseOrDecrease", "maxPercentOffAsking"],
+  restrictions: ["listingDisaggregation", "customDisaggregation", "stealth", "restrictionsString", "restrictionsCompany", "restrictionsBuyerType", "restrictionsRegion", "p0FireListing", "notes"],
+} as const satisfies Record<SectionId, readonly FormFieldName[]>;
 
 // ─── Airtable Field Mapping ───────────────────────────────────────────────────
 

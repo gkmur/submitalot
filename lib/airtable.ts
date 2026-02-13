@@ -39,13 +39,17 @@ export async function createRecord(
 
 export async function listRecords(
   tableName: string,
-  options?: { fields?: string[]; maxRecords?: number; filterFormula?: string }
+  options?: { fields?: string[]; maxRecords?: number; filterFormula?: string; sort?: { field: string; direction: "asc" | "desc" } }
 ): Promise<Array<{ id: string; fields: Record<string, unknown> }>> {
   const { pat, baseId } = getConfig();
   const params = new URLSearchParams();
   if (options?.fields) options.fields.forEach(f => params.append("fields[]", f));
   if (options?.maxRecords) params.set("maxRecords", String(options.maxRecords));
   if (options?.filterFormula) params.set("filterByFormula", options.filterFormula);
+  if (options?.sort) {
+    params.set("sort[0][field]", options.sort.field);
+    params.set("sort[0][direction]", options.sort.direction);
+  }
 
   const res = await fetch(
     `${BASE_URL}/${baseId}/${encodeURIComponent(tableName)}?${params}`,

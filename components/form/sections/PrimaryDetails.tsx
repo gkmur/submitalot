@@ -9,11 +9,17 @@ import { LinkedRecordPicker } from "../fields/LinkedRecordPicker";
 import { INVENTORY_TYPE_OPTIONS } from "@/lib/constants";
 import { LINKED_RECORD_FIELDS } from "@/lib/linked-records";
 import { shouldShowField, getFieldsToClear } from "@/lib/conditional-logic";
-import type { ItemizationFormData } from "@/lib/types";
+import type { ItemizationFormData, LinkedRecord } from "@/lib/types";
 
-export function PrimaryDetails() {
+interface PrimaryDetailsProps {
+  onRecordsChange?: (field: string, records: LinkedRecord[]) => void;
+  initialRecords?: Record<string, LinkedRecord[]>;
+  loadGeneration?: number;
+}
+
+export function PrimaryDetails({ onRecordsChange, initialRecords, loadGeneration }: PrimaryDetailsProps = {}) {
   const { watch, resetField } = useFormContext<ItemizationFormData>();
-  const formState = watch();
+  const sellerValue = watch("seller");
 
   function handleInventoryTypeChange(value: string) {
     const toClear = getFieldsToClear("inventoryType", value);
@@ -21,28 +27,40 @@ export function PrimaryDetails() {
   }
 
   const bp = LINKED_RECORD_FIELDS.brandPartner!;
-  const seller = LINKED_RECORD_FIELDS.seller!;
+  const sellerConfig = LINKED_RECORD_FIELDS.seller!;
 
   return (
     <FormSection title="Primary Details">
       <LinkedRecordPicker
+        key={`brandPartner-${loadGeneration ?? 0}`}
         name="brandPartner"
         label="Brand Partner"
         table={bp.table}
         displayField={bp.displayField}
         mode={bp.mode}
+        previewFields={bp.previewFields}
+        sortField={bp.sortField}
+        sortDirection={bp.sortDirection}
         required
         placeholder="Search brand partner..."
+        initialRecords={initialRecords?.brandPartner}
+        onRecordsChange={(r) => onRecordsChange?.("brandPartner", r)}
       />
 
       <LinkedRecordPicker
+        key={`seller-${loadGeneration ?? 0}`}
         name="seller"
         label="Seller"
-        table={seller.table}
-        displayField={seller.displayField}
-        mode={seller.mode}
+        table={sellerConfig.table}
+        displayField={sellerConfig.displayField}
+        mode={sellerConfig.mode}
+        previewFields={sellerConfig.previewFields}
+        sortField={sellerConfig.sortField}
+        sortDirection={sellerConfig.sortDirection}
         required
         placeholder="Search seller..."
+        initialRecords={initialRecords?.seller}
+        onRecordsChange={(r) => onRecordsChange?.("seller", r)}
         onChange={(value) => {
           if (value !== "NEW SELLER - GHOST TEMP") {
             const toClear = getFieldsToClear("seller", value);
@@ -51,7 +69,7 @@ export function PrimaryDetails() {
         }}
       />
 
-      {shouldShowField("newSellerId", formState) && (
+      {shouldShowField("newSellerId", { seller: sellerValue }) && (
         <div className="conditional-enter">
           <TextInput name="newSellerId" label="New Seller ID" required />
         </div>

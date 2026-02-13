@@ -10,7 +10,7 @@ const ALWAYS_VISIBLE = new Set<FormFieldName>([
   "region", "state", "city",
   "minimumOrder", "packagingType", "packagingDetails", "inventoryAvailability",
   "fobOrExw", "leadTimeNumber", "leadTimeInterval",
-  "itemizationType",
+  // "itemizationType", // commented out — qualification section disabled
   "currencyType", "inlandFreight", "marginTakeRate", "priceColumns", "maxPercentOffAsking",
   "listingDisaggregation", "stealth", "restrictionsString",
   "restrictionsCompany", "restrictionsBuyerType", "restrictionsRegion",
@@ -96,4 +96,30 @@ export function getFieldsToClear(
   }
 
   return [];
+}
+
+// Ordered list of parent fields whose conditionals should be evaluated during scrub
+const CONDITIONAL_SCRUB_ORDER: FormFieldName[] = [
+  "inventoryType", "seller", "priceColumns", "flatOrReference", "listingDisaggregation",
+];
+
+// Scrubs orphaned conditional field values from a data snapshot before restore
+export function scrubOrphanedFields(data: Partial<ItemizationFormData>): Partial<ItemizationFormData> {
+  const scrubbed = { ...data };
+  for (const parent of CONDITIONAL_SCRUB_ORDER) {
+    const value = scrubbed[parent];
+    if (typeof value === "string") {
+      const toClear = getFieldsToClear(parent, value);
+      for (const field of toClear) {
+        delete scrubbed[field];
+      }
+    } else if (value === undefined) {
+      // Parent missing — clear all possible children
+      const toClear = getFieldsToClear(parent, "");
+      for (const field of toClear) {
+        delete scrubbed[field];
+      }
+    }
+  }
+  return scrubbed;
 }

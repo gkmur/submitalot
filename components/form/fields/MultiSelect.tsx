@@ -31,16 +31,19 @@ export function MultiSelect({ name, label, options, required }: MultiSelectProps
         {required && <span className="required">*</span>}
       </span>
       {helper && <p className="field-helper">{helper}</p>}
-      <div className="checkbox-group">
+      <div className="radio-group">
         {options.map((opt) => (
-          <label key={opt} className="checkbox-item">
+          <div className="radio-pill radio-pill--multi" key={opt}>
             <input
               type="checkbox"
+              id={`${name}-${opt}`}
               checked={selected.includes(opt)}
               onChange={() => toggle(opt)}
             />
-            <span>{opt}</span>
-          </label>
+            <label htmlFor={`${name}-${opt}`}>
+              {opt}
+            </label>
+          </div>
         ))}
       </div>
       {error && <p className="field-error">{error.message as string}</p>}

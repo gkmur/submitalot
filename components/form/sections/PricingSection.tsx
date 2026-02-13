@@ -17,7 +17,8 @@ import type { ItemizationFormData } from "@/lib/types";
 
 export function PricingSection() {
   const { watch, resetField } = useFormContext<ItemizationFormData>();
-  const formState = watch();
+  const priceColumns = watch("priceColumns");
+  const flatOrReference = watch("flatOrReference");
 
   function handlePriceColumnsChange(value: string) {
     const toClear = getFieldsToClear("priceColumns", value);
@@ -43,19 +44,19 @@ export function PricingSection() {
         onChange={handlePriceColumnsChange}
       />
 
-      {shouldShowField("sellerPriceColumn", formState) && (
+      {shouldShowField("sellerPriceColumn", { priceColumns, flatOrReference }) && (
         <div className="conditional-enter">
           <TextInput name="sellerPriceColumn" label="Seller Price Column" required placeholder="Header name..." />
         </div>
       )}
 
-      {shouldShowField("buyerPriceColumn", formState) && (
+      {shouldShowField("buyerPriceColumn", { priceColumns, flatOrReference }) && (
         <div className="conditional-enter">
           <TextInput name="buyerPriceColumn" label="Buyer Price Column" required placeholder="Header name..." />
         </div>
       )}
 
-      {shouldShowField("flatOrReference", formState) && (
+      {shouldShowField("flatOrReference", { priceColumns, flatOrReference }) && (
         <div className="conditional-enter">
           <RadioGroup
             name="flatOrReference"
@@ -67,13 +68,13 @@ export function PricingSection() {
         </div>
       )}
 
-      {shouldShowField("referencePriceColumn", formState) && (
+      {shouldShowField("referencePriceColumn", { priceColumns, flatOrReference }) && (
         <div className="conditional-enter">
           <TextInput name="referencePriceColumn" label="Reference Price Column" required placeholder="Header name..." />
         </div>
       )}
 
-      {shouldShowField("increaseOrDecrease", formState) && (
+      {shouldShowField("increaseOrDecrease", { priceColumns, flatOrReference }) && (
         <div className="conditional-enter">
           <RadioGroup
             name="increaseOrDecrease"

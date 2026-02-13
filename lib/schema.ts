@@ -56,8 +56,8 @@ export const itemizationSchema = z.object({
   leadTimeNumber: z.number().min(0),
   leadTimeInterval: z.enum(["Hour(s)", "Day(s)", "Week(s)", "Month(s)"]),
 
-  // Section 6: Qualification
-  itemizationType: z.enum(["Standard", "Lightning Lot"]),
+  // Section 6: Qualification (commented out — can be re-enabled later)
+  // itemizationType: z.enum(["Standard", "Lightning Lot"]),
 
   // Section 7: Pricing
   currencyType: z.string().min(1, "Currency type is required"),

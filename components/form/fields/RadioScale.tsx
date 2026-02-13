@@ -24,9 +24,12 @@ export function RadioScale({ name, label, options, required }: RadioScaleProps) 
         {required && <span className="required">*</span>}
       </span>
       {helper && <p className="field-helper">{helper}</p>}
-      <div className="radio-group">
-        {options.map((opt) => (
-          <div className="radio-pill" key={opt.value}>
+      <div className="segment-group">
+        {options.map((opt, i) => (
+          <div
+            className={`segment-item${i === 0 ? " segment-item--first" : ""}${i === options.length - 1 ? " segment-item--last" : ""}`}
+            key={opt.value}
+          >
             <input
               type="radio"
               id={`${name}-${opt.value}`}

@@ -6,16 +6,22 @@ import { RadioGroup } from "../fields/RadioGroup";
 import { TextInput } from "../fields/TextInput";
 import { TextArea } from "../fields/TextArea";
 import { Checkbox } from "../fields/Checkbox";
-import { MultiSelect } from "../fields/MultiSelect";
 import { LinkedRecordPicker } from "../fields/LinkedRecordPicker";
+import { SearchableMultiSelect } from "../fields/SearchableMultiSelect";
 import { LISTING_DISAGGREGATION_OPTIONS, BUYER_TYPE_OPTIONS, COUNTRY_OPTIONS } from "@/lib/constants";
 import { LINKED_RECORD_FIELDS } from "@/lib/linked-records";
 import { shouldShowField, getFieldsToClear } from "@/lib/conditional-logic";
-import type { ItemizationFormData } from "@/lib/types";
+import type { ItemizationFormData, LinkedRecord } from "@/lib/types";
 
-export function RestrictionsListing() {
+interface RestrictionsListingProps {
+  onRecordsChange?: (field: string, records: LinkedRecord[]) => void;
+  initialRecords?: Record<string, LinkedRecord[]>;
+  loadGeneration?: number;
+}
+
+export function RestrictionsListing({ onRecordsChange, initialRecords, loadGeneration }: RestrictionsListingProps = {}) {
   const { watch, resetField } = useFormContext<ItemizationFormData>();
-  const formState = watch();
+  const listingDisaggregation = watch("listingDisaggregation");
 
   function handleDisaggregationChange(value: string) {
     const toClear = getFieldsToClear("listingDisaggregation", value);
@@ -34,7 +40,7 @@ export function RestrictionsListing() {
         onChange={handleDisaggregationChange}
       />
 
-      {shouldShowField("customDisaggregation", formState) && (
+      {shouldShowField("customDisaggregation", { listingDisaggregation }) && (
         <div className="conditional-enter">
           <TextInput name="customDisaggregation" label="Custom Disaggregation" required />
         </div>
@@ -44,16 +50,34 @@ export function RestrictionsListing() {
       <TextArea name="restrictionsString" label="Restrictions" placeholder="Enter any restrictions..." />
 
       <LinkedRecordPicker
+        key={`restrictionsCompany-${loadGeneration ?? 0}`}
         name="restrictionsCompany"
         label="Restrictions (Company)"
         table={company.table}
         displayField={company.displayField}
         mode={company.mode}
+        previewFields={company.previewFields}
+        sortField={company.sortField}
+        sortDirection={company.sortDirection}
         placeholder="Search companies..."
+        initialRecords={initialRecords?.restrictionsCompany}
+        onRecordsChange={(r) => onRecordsChange?.("restrictionsCompany", r)}
       />
 
-      <MultiSelect name="restrictionsBuyerType" label="Restrictions (Buyer Type)" options={BUYER_TYPE_OPTIONS} />
-      <MultiSelect name="restrictionsRegion" label="Restrictions (Region)" options={COUNTRY_OPTIONS} />
+      <SearchableMultiSelect
+        name="restrictionsBuyerType"
+        label="Restrictions (Buyer Type)"
+        options={BUYER_TYPE_OPTIONS}
+        pinnedOptions={["Brick and mortar", "Online", "Reseller", "Wholesale", "Distributor"]}
+        placeholder="Search buyer types..."
+      />
+      <SearchableMultiSelect
+        name="restrictionsRegion"
+        label="Restrictions (Region)"
+        options={COUNTRY_OPTIONS}
+        pinnedOptions={["United States", "Canada", "United Kingdom", "Germany", "France", "Australia"]}
+        placeholder="Search countries..."
+      />
 
       <Checkbox name="p0FireListing" label="P0 Fire Listing?" />
       <TextArea name="notes" label="Notes" placeholder="Additional notes..." />

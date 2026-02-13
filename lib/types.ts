@@ -117,6 +117,7 @@ export interface UploadedFile {
 export interface LinkedRecord {
   id: string;
   name: string;
+  metadata?: Record<string, string>;
 }
 
 export interface ItemizationFormData {
@@ -191,3 +192,12 @@ export interface ItemizationFormData {
 }
 
 export type FormFieldName = keyof ItemizationFormData;
+
+export type SectionId =
+  | "primary"
+  | "grading"
+  | "inventory"
+  | "location"
+  | "logistics"
+  | "pricing"
+  | "restrictions";

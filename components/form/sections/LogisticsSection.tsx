@@ -1,6 +1,5 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
 import { FormSection } from "../FormSection";
 import { TextInput } from "../fields/TextInput";
 import { TextArea } from "../fields/TextArea";
@@ -12,7 +11,6 @@ import {
   FOB_EXW_OPTIONS,
   LEAD_TIME_INTERVAL_OPTIONS,
 } from "@/lib/constants";
-import type { ItemizationFormData } from "@/lib/types";
 
 export function LogisticsSection() {
   return (
