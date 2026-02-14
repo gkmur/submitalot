@@ -25,67 +25,67 @@ export const INVENTORY_TYPE_OPTIONS: RadioOption[] = [
 // ─── Section 2: Grading Details ───────────────────────────────────────────────
 
 export const PRODUCT_ASSORTMENT_OPTIONS: RadioOption<ProductAssortment>[] = [
-  { value: "5: Hero SKUs and bestselling items", label: "5: Hero SKUs and bestselling items", color: "#22c55e" },
-  { value: "4: Mostly core categories", label: "4: Mostly core categories", color: "#eab308" },
-  { value: "3: Mixed core and non-core items", label: "3: Mixed core and non-core items", color: "#f97316" },
-  { value: "2: Mostly non-core with some appeal", label: "2: Mostly non-core with some appeal", color: "#ef4444" },
-  { value: "1: Non-core styles and categories", label: "1: Non-core styles and categories", color: "#dc2626" },
+  { value: "5: Hero SKUs and bestselling items", label: "5: Hero SKUs", color: "#22c55e" },
+  { value: "4: Mostly core categories", label: "4: Mostly core", color: "#eab308" },
+  { value: "3: Mixed core and non-core items", label: "3: Core + non-core mix", color: "#f97316" },
+  { value: "2: Mostly non-core with some appeal", label: "2: Mostly non-core", color: "#ef4444" },
+  { value: "1: Non-core styles and categories", label: "1: Non-core styles", color: "#dc2626" },
 ];
 
 export const INVENTORY_CONDITION_OPTIONS: RadioOption<InventoryCondition>[] = [
-  { value: "5: Brand new with hang tags", label: "5: Brand new with hang tags", color: "#22c55e" },
-  { value: "4: New without tags (NWOT)", label: "4: New without tags (NWOT)", color: "#eab308" },
-  { value: "3: Clean returns/store stock", label: "3: Clean returns/store stock", color: "#f97316" },
-  { value: "2: Damaged/pre-loved condition", label: "2: Damaged/pre-loved condition", color: "#ef4444" },
-  { value: "1: Major damages", label: "1: Major damages", color: "#dc2626" },
+  { value: "5: Brand new with hang tags", label: "5: New with tags", color: "#22c55e" },
+  { value: "4: New without tags (NWOT)", label: "4: New without tags", color: "#eab308" },
+  { value: "3: Clean returns/store stock", label: "3: Clean returns", color: "#f97316" },
+  { value: "2: Damaged/pre-loved condition", label: "2: Damaged/pre-loved", color: "#ef4444" },
+  { value: "1: Major damages", label: "1: Major damage", color: "#dc2626" },
 ];
 
 export const PRICING_STRENGTH_SURPLUS_OPTIONS: RadioOption<PricingStrengthSurplus>[] = [
-  { value: "5: Greater than 90% off", label: "5: Greater than 90% off", color: "#22c55e" },
-  { value: "4: 85% off", label: "4: 85% off", color: "#eab308" },
-  { value: "3: 80% off", label: "3: 80% off", color: "#f97316" },
-  { value: "2: 70-80% off", label: "2: 70-80% off", color: "#ef4444" },
-  { value: "1: Less than 70% off", label: "1: Less than 70% off", color: "#dc2626" },
+  { value: "5: Greater than 90% off", label: "5: >90% off MSRP", color: "#22c55e" },
+  { value: "4: 85% off", label: "4: ~85% off MSRP", color: "#eab308" },
+  { value: "3: 80% off", label: "3: ~80% off MSRP", color: "#f97316" },
+  { value: "2: 70-80% off", label: "2: 70-80% off MSRP", color: "#ef4444" },
+  { value: "1: Less than 70% off", label: "1: <70% off MSRP", color: "#dc2626" },
 ];
 
 export const PRICING_STRENGTH_WHOLESALE_OPTIONS: RadioOption<PricingStrengthWholesale>[] = [
-  { value: "5: 10%+ below market pricing, when compared to historical listings", label: "5: 10%+ below market pricing, when compared to historical listings", color: "#22c55e" },
-  { value: "4: <10% below market pricing, when compared to historical listings", label: "4: <10% below market pricing, when compared to historical listings", color: "#eab308" },
-  { value: "3: Around wholesale pricing, but we have no historical listing data", label: "3: Around wholesale pricing, but we have no historical listing data", color: "#f97316" },
-  { value: "2: Above market pricing, but seller is willing to negotiate", label: "2: Above market pricing, but seller is willing to negotiate", color: "#ef4444" },
-  { value: "1: Above market pricing (e.g. wholesale+, <20% vs. lowest price online)", label: "1: Above market pricing (e.g. wholesale+, <20% vs. lowest price online)", color: "#dc2626" },
+  { value: "5: 10%+ below market pricing, when compared to historical listings", label: "5: 10%+ below market", color: "#22c55e" },
+  { value: "4: <10% below market pricing, when compared to historical listings", label: "4: <10% below market", color: "#eab308" },
+  { value: "3: Around wholesale pricing, but we have no historical listing data", label: "3: Around wholesale", color: "#f97316" },
+  { value: "2: Above market pricing, but seller is willing to negotiate", label: "2: Above market (flexible)", color: "#ef4444" },
+  { value: "1: Above market pricing (e.g. wholesale+, <20% vs. lowest price online)", label: "1: Above market", color: "#dc2626" },
 ];
 
 export const BRAND_DEMAND_SURPLUS_OPTIONS: RadioOption<BrandDemandSurplus>[] = [
-  { value: "5: Internationally recognized brand with full-price wholesale presence in top retailers", label: "5: Internationally recognized brand with full-price wholesale presence in top retailers", color: "#22c55e" },
-  { value: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", label: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", color: "#eab308" },
-  { value: "3: Highly distributed in off-price", label: "3: Highly distributed in off-price", color: "#f97316" },
-  { value: "2: Limited brand recognition", label: "2: Limited brand recognition", color: "#ef4444" },
-  { value: "1: Unknown or no-name brand", label: "1: Unknown or no-name brand", color: "#dc2626" },
+  { value: "5: Internationally recognized brand with full-price wholesale presence in top retailers", label: "5: Top-tier global brand", color: "#22c55e" },
+  { value: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", label: "4: Viral/trending brand", color: "#eab308" },
+  { value: "3: Highly distributed in off-price", label: "3: Broad off-price distro", color: "#f97316" },
+  { value: "2: Limited brand recognition", label: "2: Limited recognition", color: "#ef4444" },
+  { value: "1: Unknown or no-name brand", label: "1: Unknown/no-name", color: "#dc2626" },
 ];
 
 export const BRAND_DEMAND_WHOLESALE_OPTIONS: RadioOption<BrandDemandWholesale>[] = [
-  { value: "5: Internationally recognized brand with full-price wholesale presence in top retailers", label: "5: Internationally recognized brand with full-price wholesale presence in top retailers", color: "#22c55e" },
-  { value: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", label: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", color: "#eab308" },
-  { value: "3: Highly distributed in off-price", label: "3: Highly distributed in off-price", color: "#f97316" },
-  { value: "2: Limited brand recognition", label: "2: Limited brand recognition", color: "#ef4444" },
-  { value: "1: Unknown or no-name brand", label: "1: Unknown or no-name brand", color: "#dc2626" },
+  { value: "5: Internationally recognized brand with full-price wholesale presence in top retailers", label: "5: Top-tier global brand", color: "#22c55e" },
+  { value: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", label: "4: Viral/trending brand", color: "#eab308" },
+  { value: "3: Highly distributed in off-price", label: "3: Broad off-price distro", color: "#f97316" },
+  { value: "2: Limited brand recognition", label: "2: Limited recognition", color: "#ef4444" },
+  { value: "1: Unknown or no-name brand", label: "1: Unknown/no-name", color: "#dc2626" },
 ];
 
 export const LOCATION_SURPLUS_OPTIONS: RadioOption<LocationSurplus>[] = [
-  { value: "5: Located in US", label: "5: Located in US", color: "#22c55e" },
-  { value: "4: International but seller will land goods in US", label: "4: International but seller will land goods in US", color: "#eab308" },
-  { value: "3: Located in US but can only sell internationally", label: "3: Located in US but can only sell internationally", color: "#f97316" },
-  { value: "2: Bonded warehouse OR international but can sell anywhere", label: "2: Bonded warehouse OR international but can sell anywhere", color: "#ef4444" },
-  { value: "1: International, cannot sell in current location", label: "1: International, cannot sell in current location", color: "#dc2626" },
+  { value: "5: Located in US", label: "5: US-based", color: "#22c55e" },
+  { value: "4: International but seller will land goods in US", label: "4: Intl, will land in US", color: "#eab308" },
+  { value: "3: Located in US but can only sell internationally", label: "3: US-based, intl-only sales", color: "#f97316" },
+  { value: "2: Bonded warehouse OR international but can sell anywhere", label: "2: Bonded/intl, broad sales", color: "#ef4444" },
+  { value: "1: International, cannot sell in current location", label: "1: Intl, location limits sales", color: "#dc2626" },
 ];
 
 export const LOCATION_WHOLESALE_OPTIONS: RadioOption<LocationWholesale>[] = [
-  { value: "5: US location OR buyer pickup available", label: "5: US location OR buyer pickup available", color: "#22c55e" },
-  { value: "4: International, seller will handle US landing", label: "4: International, seller will handle US landing", color: "#eab308" },
-  { value: "3: International, seller has estimated landed costs", label: "3: International, seller has estimated landed costs", color: "#f97316" },
-  { value: "2: International, seller cannot import (beauty/fragrance - easy import)", label: "2: International, seller cannot import (beauty/fragrance - easy import)", color: "#ef4444" },
-  { value: "1: International, seller cannot import (non-beauty/fragrance)", label: "1: International, seller cannot import (non-beauty/fragrance)", color: "#dc2626" },
+  { value: "5: US location OR buyer pickup available", label: "5: US location / pickup", color: "#22c55e" },
+  { value: "4: International, seller will handle US landing", label: "4: Intl, seller handles landing", color: "#eab308" },
+  { value: "3: International, seller has estimated landed costs", label: "3: Intl, landed costs estimated", color: "#f97316" },
+  { value: "2: International, seller cannot import (beauty/fragrance - easy import)", label: "2: Intl, no import (beauty/fragrance)", color: "#ef4444" },
+  { value: "1: International, seller cannot import (non-beauty/fragrance)", label: "1: Intl, no import (non-beauty)", color: "#dc2626" },
 ];
 
 export const RESTRICTIONS_SURPLUS_OPTIONS: RadioOption<RestrictionsSurplus>[] = [

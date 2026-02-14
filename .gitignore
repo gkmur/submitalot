@@ -6,6 +6,7 @@ node_modules/
 
 # next.js
 .next/
+.next-dev/
 out/
 
 # env files
