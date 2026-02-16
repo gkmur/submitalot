@@ -87,11 +87,16 @@ export function LinkedRecordPicker({
         const sort = sortField ? { field: sortField, direction: sortDirection ?? ("asc" as const) } : undefined;
         const data = await searchLinkedRecords(table, displayField, q, previewFields, sort);
         if (gen !== searchGenRef.current) return;
-        setResults(data);
-        setLinkedRecordCache(cacheKey, data);
+        setResults(data.records);
+        if (data.error) {
+          setSearchError(data.error);
+        } else {
+          setSearchError(null);
+          setLinkedRecordCache(cacheKey, data.records);
+        }
       } catch (err) {
         if (gen !== searchGenRef.current) return;
-        const message = err instanceof Error ? err.message : "Failed to load options";
+        const message = normalizeLookupError(err);
         setSearchError(message);
         setResults([]);
       } finally {
@@ -250,4 +255,12 @@ export function LinkedRecordPicker({
       {!error && searchError && <p className="field-error">{searchError}</p>}
     </div>
   );
+}
+
+function normalizeLookupError(err: unknown) {
+  const message = err instanceof Error ? err.message : "Failed to load options";
+  if (/server components render/i.test(message) || /digest property/i.test(message)) {
+    return "Unable to load linked records right now. Please try again.";
+  }
+  return message;
 }

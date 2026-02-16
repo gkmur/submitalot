@@ -57,7 +57,11 @@ function getRedisClient(): Redis | null {
     return null;
   }
 
-  globalThis.__submitalotRedisClient = Redis.fromEnv();
+  try {
+    globalThis.__submitalotRedisClient = new Redis({ url, token });
+  } catch {
+    globalThis.__submitalotRedisClient = null;
+  }
   return globalThis.__submitalotRedisClient;
 }
 
@@ -74,7 +78,8 @@ export async function getJsonValue<T>(key: string): Promise<T | null> {
       if (!raw) return null;
       return JSON.parse(raw) as T;
     } catch {
-      return null;
+      // Redis can be unavailable/intermittent; degrade to in-memory fallback.
+      globalThis.__submitalotRedisClient = null;
     }
   }
 
@@ -92,8 +97,12 @@ export async function setJsonValue(key: string, value: unknown, ttlMs: number) {
   const serialized = JSON.stringify(value);
   const redis = getRedisClient();
   if (redis) {
-    await redis.set(key, serialized, { px: ttlMs });
-    return;
+    try {
+      await redis.set(key, serialized, { px: ttlMs });
+      return;
+    } catch {
+      globalThis.__submitalotRedisClient = null;
+    }
   }
 
   writeMemoryValue(key, serialized, ttlMs);
@@ -105,20 +114,24 @@ export async function incrementWindowCounter(
 ): Promise<{ count: number; retryAfterMs: number }> {
   const redis = getRedisClient();
   if (redis) {
-    const count = asNumber(await redis.incr(key), 0);
+    try {
+      const count = asNumber(await redis.incr(key), 0);
 
-    if (count === 1) {
-      await redis.pexpire(key, windowMs);
-      return { count, retryAfterMs: windowMs };
+      if (count === 1) {
+        await redis.pexpire(key, windowMs);
+        return { count, retryAfterMs: windowMs };
+      }
+
+      let ttl = asNumber(await redis.pttl(key), windowMs);
+      if (ttl < 0) {
+        await redis.pexpire(key, windowMs);
+        ttl = windowMs;
+      }
+
+      return { count, retryAfterMs: ttl };
+    } catch {
+      globalThis.__submitalotRedisClient = null;
     }
-
-    let ttl = asNumber(await redis.pttl(key), windowMs);
-    if (ttl < 0) {
-      await redis.pexpire(key, windowMs);
-      ttl = windowMs;
-    }
-
-    return { count, retryAfterMs: ttl };
   }
 
   const entry = readMemoryValue(key);
