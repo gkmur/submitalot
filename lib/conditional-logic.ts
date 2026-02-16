@@ -114,8 +114,8 @@ export function scrubOrphanedFields(data: Partial<ItemizationFormData>): Partial
       for (const field of toClear) {
         delete scrubbed[field];
       }
-    } else {
-      // Parent missing or invalid — clear all possible children
+    } else if (value === undefined) {
+      // Parent missing — clear all possible children
       const toClear = getFieldsToClear(parent, "");
       for (const field of toClear) {
         delete scrubbed[field];
