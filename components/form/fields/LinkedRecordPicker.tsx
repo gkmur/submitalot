@@ -3,8 +3,13 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 import type { ItemizationFormData, FormFieldName, LinkedRecord } from "@/lib/types";
-import { HELPER_TEXT } from "@/lib/constants";
+import { HELPER_TEXT } from "@/lib/constants/form";
 import { searchLinkedRecords } from "@/app/actions/fetch-options";
+import {
+  getLinkedRecordCache,
+  makeLinkedRecordCacheKey,
+  setLinkedRecordCache,
+} from "@/lib/linked-record-cache";
 
 interface LinkedRecordPickerProps {
   name: FormFieldName;
@@ -15,6 +20,7 @@ interface LinkedRecordPickerProps {
   required?: boolean;
   placeholder?: string;
   onChange?: (value: string) => void;
+  onSelectRecord?: (record: LinkedRecord | null) => void;
   onRecordsChange?: (records: LinkedRecord[]) => void;
   previewFields?: string[];
   sortField?: string;
@@ -31,13 +37,14 @@ export function LinkedRecordPicker({
   required,
   placeholder,
   onChange,
+  onSelectRecord,
   onRecordsChange,
   previewFields,
   sortField,
   sortDirection,
   initialRecords,
 }: LinkedRecordPickerProps) {
-  const { setValue, watch, formState: { errors } } = useFormContext<ItemizationFormData>();
+  const { setValue, formState: { errors } } = useFormContext<ItemizationFormData>();
   const helper = HELPER_TEXT[name];
   const error = errors[name];
 
@@ -46,6 +53,7 @@ export function LinkedRecordPicker({
   );
   const [results, setResults] = useState<LinkedRecord[]>([]);
   const [loading, setLoading] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -56,14 +64,35 @@ export function LinkedRecordPicker({
   const doSearch = useCallback(
     async (q: string) => {
       const gen = ++searchGenRef.current;
+      const cacheKey = makeLinkedRecordCacheKey({
+        table,
+        displayField,
+        query: q,
+        extraFields: previewFields,
+        sortField,
+        sortDirection: sortDirection ?? "asc",
+      });
+      const cached = getLinkedRecordCache(cacheKey);
+      if (cached) {
+        if (gen !== searchGenRef.current) return;
+        setResults(cached);
+        setLoading(false);
+        setSearchError(null);
+        return;
+      }
+
       setLoading(true);
+      setSearchError(null);
       try {
         const sort = sortField ? { field: sortField, direction: sortDirection ?? ("asc" as const) } : undefined;
         const data = await searchLinkedRecords(table, displayField, q, previewFields, sort);
         if (gen !== searchGenRef.current) return;
         setResults(data);
-      } catch {
+        setLinkedRecordCache(cacheKey, data);
+      } catch (err) {
         if (gen !== searchGenRef.current) return;
+        const message = err instanceof Error ? err.message : "Failed to load options";
+        setSearchError(message);
         setResults([]);
       } finally {
         if (gen === searchGenRef.current) setLoading(false);
@@ -75,6 +104,15 @@ export function LinkedRecordPicker({
   function handleInputChange(value: string) {
     setQuery(value);
     setOpen(true);
+    setSearchError(null);
+
+    if (mode === "single" && selectedRecords.length > 0) {
+      setSelectedRecords([]);
+      setValue(name, "" as never, { shouldValidate: true });
+      onChange?.("");
+      onSelectRecord?.(null);
+      onRecordsChange?.([]);
+    }
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => doSearch(value), 300);
@@ -88,9 +126,11 @@ export function LinkedRecordPicker({
 
   function handleSelect(record: LinkedRecord) {
     if (mode === "single") {
+      setSelectedRecords([record]);
       setQuery(record.name);
-      setValue(name, record.name as never, { shouldValidate: true });
-      onChange?.(record.name);
+      setValue(name, record.id as never, { shouldValidate: true });
+      onChange?.(record.id);
+      onSelectRecord?.(record);
       onRecordsChange?.([record]);
       setOpen(false);
     } else {
@@ -104,6 +144,7 @@ export function LinkedRecordPicker({
       setQuery("");
       setOpen(false);
     }
+    setSearchError(null);
   }
 
   function handleRemove(id: string) {
@@ -206,6 +247,7 @@ export function LinkedRecordPicker({
       </div>
 
       {error && <p className="field-error">{error.message as string}</p>}
+      {!error && searchError && <p className="field-error">{searchError}</p>}
     </div>
   );
 }

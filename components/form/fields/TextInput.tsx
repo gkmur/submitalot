@@ -2,7 +2,7 @@
 
 import { useFormContext } from "react-hook-form";
 import type { ItemizationFormData, FormFieldName } from "@/lib/types";
-import { HELPER_TEXT } from "@/lib/constants";
+import { HELPER_TEXT } from "@/lib/constants/form";
 
 interface TextInputProps {
   name: FormFieldName;

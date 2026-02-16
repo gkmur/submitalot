@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { FormSection } from "../FormSection";
 import { TextInput } from "../fields/TextInput";
 import { RadioGroup } from "../fields/RadioGroup";
@@ -11,14 +11,16 @@ import {
   PRICE_COLUMNS_OPTIONS,
   FLAT_OR_REFERENCE_OPTIONS,
   INCREASE_DECREASE_OPTIONS,
-} from "@/lib/constants";
+} from "@/lib/constants/options";
 import { shouldShowField, getFieldsToClear } from "@/lib/conditional-logic";
 import type { ItemizationFormData } from "@/lib/types";
 
 export function PricingSection() {
-  const { watch, resetField } = useFormContext<ItemizationFormData>();
-  const priceColumns = watch("priceColumns");
-  const flatOrReference = watch("flatOrReference");
+  const { control, resetField } = useFormContext<ItemizationFormData>();
+  const [priceColumns, flatOrReference] = useWatch({
+    control,
+    name: ["priceColumns", "flatOrReference"],
+  });
 
   function handlePriceColumnsChange(value: string) {
     const toClear = getFieldsToClear("priceColumns", value);

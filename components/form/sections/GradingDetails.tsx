@@ -1,6 +1,7 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useMemo } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
 import { FormSection } from "../FormSection";
 import { RadioScale } from "../fields/RadioScale";
 import { StarRating } from "../fields/StarRating";
@@ -15,10 +16,10 @@ import {
   LOCATION_WHOLESALE_OPTIONS,
   RESTRICTIONS_SURPLUS_OPTIONS,
   RESTRICTIONS_WHOLESALE_OPTIONS,
-} from "@/lib/constants";
+} from "@/lib/constants/options";
 import { shouldShowField } from "@/lib/conditional-logic";
 import type { ItemizationFormData, FormFieldName } from "@/lib/types";
-import type { RadioOption } from "@/lib/constants";
+import type { RadioOption } from "@/lib/constants/shared";
 
 type ScaleFieldName =
   | "productAssortment"
@@ -56,23 +57,117 @@ function isFilled(value: unknown): boolean {
   return false;
 }
 
+const CORE_SCALES: ScaleConfig[] = [
+  {
+    name: "productAssortment",
+    label: "Product Assortment",
+    options: PRODUCT_ASSORTMENT_OPTIONS,
+    legendLow: "1 = least core",
+    legendHigh: "5 = most core",
+  },
+  {
+    name: "inventoryCondition",
+    label: "Inventory Condition",
+    options: INVENTORY_CONDITION_OPTIONS,
+    legendLow: "1 = major damage",
+    legendHigh: "5 = brand new",
+  },
+];
+
+const SURPLUS_SCALES: ScaleConfig[] = [
+  {
+    name: "pricingStrengthSurplus",
+    label: "Pricing Strength",
+    options: PRICING_STRENGTH_SURPLUS_OPTIONS,
+    helperText: "How much discount off MSRP is the seller offering?",
+    legendLow: "1 = weak",
+    legendHigh: "5 = strong",
+  },
+  {
+    name: "brandDemandSurplus",
+    label: "Brand Demand",
+    options: BRAND_DEMAND_SURPLUS_OPTIONS,
+    helperText: "Consider brand awareness, demand, and market pull.",
+    legendLow: "1 = weak demand",
+    legendHigh: "5 = strong demand",
+  },
+  {
+    name: "locationSurplus",
+    label: "Location",
+    options: LOCATION_SURPLUS_OPTIONS,
+    helperText: "How favorable is location and sellability for this lot?",
+    legendLow: "1 = restrictive",
+    legendHigh: "5 = flexible",
+  },
+  {
+    name: "restrictionsSurplus",
+    label: "Restrictions",
+    options: RESTRICTIONS_SURPLUS_OPTIONS,
+    helperText: "How flexible is the seller about where inventory can be sold?",
+    legendLow: "1 = very restrictive",
+    legendHigh: "5 = no restrictions",
+  },
+];
+
+const WHOLESALE_SCALES: ScaleConfig[] = [
+  {
+    name: "pricingStrengthWholesale",
+    label: "Pricing Strength",
+    options: PRICING_STRENGTH_WHOLESALE_OPTIONS,
+    helperText: "How competitive is pricing after Ghost's markup?",
+    legendLow: "1 = weak",
+    legendHigh: "5 = strong",
+  },
+  {
+    name: "brandDemandWholesale",
+    label: "Brand Demand",
+    options: BRAND_DEMAND_WHOLESALE_OPTIONS,
+    helperText: "Consider brand awareness, demand, and market pull.",
+    legendLow: "1 = weak demand",
+    legendHigh: "5 = strong demand",
+  },
+  {
+    name: "locationWholesale",
+    label: "Location",
+    options: LOCATION_WHOLESALE_OPTIONS,
+    helperText: "How favorable is location and sellability for this lot?",
+    legendLow: "1 = restrictive",
+    legendHigh: "5 = flexible",
+  },
+  {
+    name: "restrictionsWholesale",
+    label: "Restrictions",
+    options: RESTRICTIONS_WHOLESALE_OPTIONS,
+    helperText: "How flexible is the seller about where inventory can be sold?",
+    legendLow: "1 = very restrictive",
+    legendHigh: "5 = no restrictions",
+  },
+];
+
+const GRADING_WATCH_FIELDS: FormFieldName[] = [
+  "inventoryType",
+  "productAssortment",
+  "inventoryCondition",
+  "overallListingRating",
+  "pricingStrengthSurplus",
+  "pricingStrengthWholesale",
+  "brandDemandSurplus",
+  "brandDemandWholesale",
+  "locationSurplus",
+  "locationWholesale",
+  "restrictionsSurplus",
+  "restrictionsWholesale",
+];
+
 export function GradingDetails() {
-  const { watch } = useFormContext<ItemizationFormData>();
+  const { control } = useFormContext<ItemizationFormData>();
+  const watchedValues = useWatch({
+    control,
+    name: GRADING_WATCH_FIELDS,
+  });
 
-  const inventoryType = watch("inventoryType");
-  const productAssortment = watch("productAssortment");
-  const inventoryCondition = watch("inventoryCondition");
-  const overallListingRating = watch("overallListingRating");
-  const pricingStrengthSurplus = watch("pricingStrengthSurplus");
-  const pricingStrengthWholesale = watch("pricingStrengthWholesale");
-  const brandDemandSurplus = watch("brandDemandSurplus");
-  const brandDemandWholesale = watch("brandDemandWholesale");
-  const locationSurplus = watch("locationSurplus");
-  const locationWholesale = watch("locationWholesale");
-  const restrictionsSurplus = watch("restrictionsSurplus");
-  const restrictionsWholesale = watch("restrictionsWholesale");
-
-  const fieldValues: Partial<Record<FormFieldName, string | number | undefined>> = {
+  const [
+    inventoryType,
     productAssortment,
     inventoryCondition,
     overallListingRating,
@@ -84,120 +179,84 @@ export function GradingDetails() {
     locationWholesale,
     restrictionsSurplus,
     restrictionsWholesale,
-  };
-
-  const coreScales: ScaleConfig[] = [
-    {
-      name: "productAssortment",
-      label: "Product Assortment",
-      options: PRODUCT_ASSORTMENT_OPTIONS,
-      legendLow: "1 = least core",
-      legendHigh: "5 = most core",
-    },
-    {
-      name: "inventoryCondition",
-      label: "Inventory Condition",
-      options: INVENTORY_CONDITION_OPTIONS,
-      legendLow: "1 = major damage",
-      legendHigh: "5 = brand new",
-    },
+  ] = watchedValues as [
+    ItemizationFormData["inventoryType"] | undefined,
+    ItemizationFormData["productAssortment"] | undefined,
+    ItemizationFormData["inventoryCondition"] | undefined,
+    ItemizationFormData["overallListingRating"] | undefined,
+    ItemizationFormData["pricingStrengthSurplus"] | undefined,
+    ItemizationFormData["pricingStrengthWholesale"] | undefined,
+    ItemizationFormData["brandDemandSurplus"] | undefined,
+    ItemizationFormData["brandDemandWholesale"] | undefined,
+    ItemizationFormData["locationSurplus"] | undefined,
+    ItemizationFormData["locationWholesale"] | undefined,
+    ItemizationFormData["restrictionsSurplus"] | undefined,
+    ItemizationFormData["restrictionsWholesale"] | undefined
   ];
 
-  const surplusScales: ScaleConfig[] = [
-    {
-      name: "pricingStrengthSurplus",
-      label: "Pricing Strength",
-      options: PRICING_STRENGTH_SURPLUS_OPTIONS,
-      helperText: "How much discount off MSRP is the seller offering?",
-      legendLow: "1 = weak",
-      legendHigh: "5 = strong",
-    },
-    {
-      name: "brandDemandSurplus",
-      label: "Brand Demand",
-      options: BRAND_DEMAND_SURPLUS_OPTIONS,
-      helperText: "Consider brand awareness, demand, and market pull.",
-      legendLow: "1 = weak demand",
-      legendHigh: "5 = strong demand",
-    },
-    {
-      name: "locationSurplus",
-      label: "Location",
-      options: LOCATION_SURPLUS_OPTIONS,
-      helperText: "How favorable is location and sellability for this lot?",
-      legendLow: "1 = restrictive",
-      legendHigh: "5 = flexible",
-    },
-    {
-      name: "restrictionsSurplus",
-      label: "Restrictions",
-      options: RESTRICTIONS_SURPLUS_OPTIONS,
-      helperText: "How flexible is the seller about where inventory can be sold?",
-      legendLow: "1 = very restrictive",
-      legendHigh: "5 = no restrictions",
-    },
-  ];
+  const fieldValues = useMemo<Partial<Record<FormFieldName, string | number | undefined>>>(
+    () => ({
+      productAssortment,
+      inventoryCondition,
+      overallListingRating,
+      pricingStrengthSurplus,
+      pricingStrengthWholesale,
+      brandDemandSurplus,
+      brandDemandWholesale,
+      locationSurplus,
+      locationWholesale,
+      restrictionsSurplus,
+      restrictionsWholesale,
+    }),
+    [
+      productAssortment,
+      inventoryCondition,
+      overallListingRating,
+      pricingStrengthSurplus,
+      pricingStrengthWholesale,
+      brandDemandSurplus,
+      brandDemandWholesale,
+      locationSurplus,
+      locationWholesale,
+      restrictionsSurplus,
+      restrictionsWholesale,
+    ]
+  );
 
-  const wholesaleScales: ScaleConfig[] = [
-    {
-      name: "pricingStrengthWholesale",
-      label: "Pricing Strength",
-      options: PRICING_STRENGTH_WHOLESALE_OPTIONS,
-      helperText: "How competitive is pricing after Ghost's markup?",
-      legendLow: "1 = weak",
-      legendHigh: "5 = strong",
-    },
-    {
-      name: "brandDemandWholesale",
-      label: "Brand Demand",
-      options: BRAND_DEMAND_WHOLESALE_OPTIONS,
-      helperText: "Consider brand awareness, demand, and market pull.",
-      legendLow: "1 = weak demand",
-      legendHigh: "5 = strong demand",
-    },
-    {
-      name: "locationWholesale",
-      label: "Location",
-      options: LOCATION_WHOLESALE_OPTIONS,
-      helperText: "How favorable is location and sellability for this lot?",
-      legendLow: "1 = restrictive",
-      legendHigh: "5 = flexible",
-    },
-    {
-      name: "restrictionsWholesale",
-      label: "Restrictions",
-      options: RESTRICTIONS_WHOLESALE_OPTIONS,
-      helperText: "How flexible is the seller about where inventory can be sold?",
-      legendLow: "1 = very restrictive",
-      legendHigh: "5 = no restrictions",
-    },
-  ];
+  const variantScales = useMemo(() => {
+    if (inventoryType === "Discount") return SURPLUS_SCALES;
+    if (inventoryType === "Wholesale") return WHOLESALE_SCALES;
+    return [] as ScaleConfig[];
+  }, [inventoryType]);
 
-  const variantScales =
-    inventoryType === "Discount"
-      ? surplusScales
-      : inventoryType === "Wholesale"
-        ? wholesaleScales
-        : [];
+  const requiredVisibleFields = useMemo<FormFieldName[]>(
+    () => [
+      "productAssortment",
+      "inventoryCondition",
+      "overallListingRating",
+      ...variantScales.map((s) => s.name),
+    ],
+    [variantScales]
+  );
 
-  const requiredVisibleFields: FormFieldName[] = [
-    "productAssortment",
-    "inventoryCondition",
-    "overallListingRating",
-    ...variantScales.map((s) => s.name),
-  ];
+  const completedCount = useMemo(
+    () => requiredVisibleFields.filter((field) => isFilled(fieldValues[field])).length,
+    [requiredVisibleFields, fieldValues]
+  );
 
-  const completedCount = requiredVisibleFields.filter((field) => isFilled(fieldValues[field])).length;
-  const summaryItems: { key: string; label: string; score: string }[] = [
-    { key: "assortment", label: "Assortment", score: scoreFromValue(productAssortment) },
-    { key: "condition", label: "Condition", score: scoreFromValue(inventoryCondition) },
-    { key: "overall", label: "Overall", score: scoreFromValue(overallListingRating) },
-    ...variantScales.map((scale) => ({
-      key: scale.name,
-      label: scale.label,
-      score: scoreFromValue(fieldValues[scale.name]),
-    })),
-  ];
+  const summaryItems = useMemo<{ key: string; label: string; score: string }[]>(
+    () => [
+      { key: "assortment", label: "Assortment", score: scoreFromValue(productAssortment) },
+      { key: "condition", label: "Condition", score: scoreFromValue(inventoryCondition) },
+      { key: "overall", label: "Overall", score: scoreFromValue(overallListingRating) },
+      ...variantScales.map((scale) => ({
+        key: scale.name,
+        label: scale.label,
+        score: scoreFromValue(fieldValues[scale.name]),
+      })),
+    ],
+    [productAssortment, inventoryCondition, overallListingRating, variantScales, fieldValues]
+  );
 
   return (
     <FormSection title="Grading Details">
@@ -216,7 +275,7 @@ export function GradingDetails() {
 
       <div className="grading-group">
         <h3 className="grading-group-title">Core Grading</h3>
-        {coreScales.map((scale) => (
+        {CORE_SCALES.map((scale) => (
           <RadioScale
             key={scale.name}
             name={scale.name}

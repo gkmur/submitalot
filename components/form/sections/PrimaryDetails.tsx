@@ -1,12 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { FormSection } from "../FormSection";
 import { TextInput } from "../fields/TextInput";
 import { RadioGroup } from "../fields/RadioGroup";
 import { FileUpload } from "../fields/FileUpload";
 import { LinkedRecordPicker } from "../fields/LinkedRecordPicker";
-import { INVENTORY_TYPE_OPTIONS } from "@/lib/constants";
+import { INVENTORY_TYPE_OPTIONS } from "@/lib/constants/options";
 import { LINKED_RECORD_FIELDS } from "@/lib/linked-records";
 import { shouldShowField, getFieldsToClear } from "@/lib/conditional-logic";
 import type { ItemizationFormData, LinkedRecord } from "@/lib/types";
@@ -18,8 +19,14 @@ interface PrimaryDetailsProps {
 }
 
 export function PrimaryDetails({ onRecordsChange, initialRecords, loadGeneration }: PrimaryDetailsProps = {}) {
-  const { watch, resetField } = useFormContext<ItemizationFormData>();
-  const sellerValue = watch("seller");
+  const { resetField } = useFormContext<ItemizationFormData>();
+  const [selectedSellerName, setSelectedSellerName] = useState(
+    initialRecords?.seller?.[0]?.name ?? ""
+  );
+
+  useEffect(() => {
+    setSelectedSellerName(initialRecords?.seller?.[0]?.name ?? "");
+  }, [initialRecords?.seller, loadGeneration]);
 
   function handleInventoryTypeChange(value: string) {
     const toClear = getFieldsToClear("inventoryType", value);
@@ -61,15 +68,17 @@ export function PrimaryDetails({ onRecordsChange, initialRecords, loadGeneration
         placeholder="Search seller..."
         initialRecords={initialRecords?.seller}
         onRecordsChange={(r) => onRecordsChange?.("seller", r)}
-        onChange={(value) => {
-          if (value !== "NEW SELLER - GHOST TEMP") {
-            const toClear = getFieldsToClear("seller", value);
+        onSelectRecord={(record) => {
+          const sellerName = record?.name ?? "";
+          setSelectedSellerName(sellerName);
+          if (sellerName !== "NEW SELLER - GHOST TEMP") {
+            const toClear = getFieldsToClear("seller", sellerName);
             toClear.forEach((field) => resetField(field));
           }
         }}
       />
 
-      {shouldShowField("newSellerId", { seller: sellerValue }) && (
+      {shouldShowField("newSellerId", { seller: selectedSellerName }) && (
         <div className="conditional-enter">
           <TextInput name="newSellerId" label="New Seller ID" required />
         </div>

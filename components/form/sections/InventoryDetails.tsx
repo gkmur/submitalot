@@ -10,7 +10,7 @@ import {
   INVENTORY_EXCLUSIVITY_OPTIONS,
   PAPERWORK_OPTIONS,
   TAG_PRESET_OPTIONS,
-} from "@/lib/constants";
+} from "@/lib/constants/options";
 
 export function InventoryDetails() {
   return (

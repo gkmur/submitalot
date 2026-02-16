@@ -10,7 +10,7 @@ import {
   INVENTORY_AVAILABILITY_OPTIONS,
   FOB_EXW_OPTIONS,
   LEAD_TIME_INTERVAL_OPTIONS,
-} from "@/lib/constants";
+} from "@/lib/constants/options";
 
 export function LogisticsSection() {
   return (

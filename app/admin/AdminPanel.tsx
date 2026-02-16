@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { AIRTABLE_FIELD_MAP } from "@/lib/constants";
+import { AIRTABLE_FIELD_MAP } from "@/lib/constants/airtable";
 import type { ItemizationFormData } from "@/lib/types";
 import "./admin.css";
 
@@ -178,9 +178,12 @@ export function AdminPanel() {
       const res = await fetch("/api/admin/sync", { method: "PUT" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Apply failed");
+      const backupPaths = Array.isArray(data.backupPath)
+        ? data.backupPath.join(", ")
+        : String(data.backupPath ?? "n/a");
       setSyncResult({
         type: "success",
-        message: `Synced. Backup: ${data.backupPath}. ${data.newFieldsCount} new field(s) detected.`,
+        message: `Synced. Backup: ${backupPaths}. ${data.newFieldsCount} new field(s) detected.`,
       });
       setSyncDiff(null);
     } catch (e) {

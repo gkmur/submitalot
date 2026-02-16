@@ -1,6 +1,6 @@
 import type { ItemizationFormData, FormFieldName, SectionId, LinkedRecord } from "./types";
 import { LINKED_RECORD_FIELDS } from "./linked-records";
-import { FORM_DEFAULTS, SECTION_FIELD_MAP } from "./constants";
+import { FORM_DEFAULTS, SECTION_FIELD_MAP } from "./constants/form";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@
 
 import { FormSection } from "../FormSection";
 import { RadioGroup } from "../fields/RadioGroup";
-import { ITEMIZATION_TYPE_OPTIONS } from "@/lib/constants";
+import { ITEMIZATION_TYPE_OPTIONS } from "@/lib/constants/options";
 
 export function QualificationSection() {
   return (

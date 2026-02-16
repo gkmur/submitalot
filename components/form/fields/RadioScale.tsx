@@ -2,8 +2,8 @@
 
 import { useFormContext } from "react-hook-form";
 import type { ItemizationFormData, FormFieldName } from "@/lib/types";
-import type { RadioOption } from "@/lib/constants";
-import { HELPER_TEXT } from "@/lib/constants";
+import type { RadioOption } from "@/lib/constants/shared";
+import { HELPER_TEXT } from "@/lib/constants/form";
 
 interface RadioScaleProps {
   name: FormFieldName;

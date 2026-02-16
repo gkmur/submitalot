@@ -4,7 +4,7 @@ import { FormSection } from "../FormSection";
 import { SearchableMultiSelect } from "../fields/SearchableMultiSelect";
 import { SelectDropdown } from "../fields/SelectDropdown";
 import { TextInput } from "../fields/TextInput";
-import { COUNTRY_OPTIONS, US_STATE_OPTIONS } from "@/lib/constants";
+import { COUNTRY_OPTIONS, US_STATE_OPTIONS } from "@/lib/constants/options";
 
 export function LocationSection() {
   return (

@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { readFileSync, writeFileSync, copyFileSync } from "fs";
 import { join } from "path";
 import { fetchBaseSchema, getFieldChoices } from "@/lib/airtable-meta";
-import { AIRTABLE_FIELD_MAP } from "@/lib/constants";
+import { AIRTABLE_FIELD_MAP } from "@/lib/constants/airtable";
 import type { ItemizationFormData } from "@/lib/types";
 
-const CONSTANTS_PATH = join(process.cwd(), "lib/constants.ts");
+const OPTIONS_PATH = join(process.cwd(), "lib/constants/options.ts");
+const AIRTABLE_MAP_PATH = join(process.cwd(), "lib/constants/airtable.ts");
 
 interface SyncDiff {
   newFields: string[];
@@ -28,7 +29,7 @@ export async function POST() {
       return NextResponse.json({ error: "Inventory table not found in base" }, { status: 404 });
     }
 
-    const existingSource = readFileSync(CONSTANTS_PATH, "utf-8");
+    const existingSource = readFileSync(OPTIONS_PATH, "utf-8");
 
     // Build the set of already-mapped Airtable field names
     const mappedAirtableNames = new Set(Object.values(AIRTABLE_FIELD_MAP));
@@ -112,10 +113,13 @@ export async function PUT() {
 
     // Create timestamped backup
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const backupPath = join(process.cwd(), `lib/constants.${timestamp}.bak.ts`);
-    copyFileSync(CONSTANTS_PATH, backupPath);
+    const optionsBackupPath = join(process.cwd(), `lib/constants.options.${timestamp}.bak.ts`);
+    const mapBackupPath = join(process.cwd(), `lib/constants.airtable.${timestamp}.bak.ts`);
+    copyFileSync(OPTIONS_PATH, optionsBackupPath);
+    copyFileSync(AIRTABLE_MAP_PATH, mapBackupPath);
 
-    let source = readFileSync(CONSTANTS_PATH, "utf-8");
+    let optionsSource = readFileSync(OPTIONS_PATH, "utf-8");
+    let mappingSource = readFileSync(AIRTABLE_MAP_PATH, "utf-8");
 
     // Update option arrays from select field choices
     const optionArrays: Record<string, string> = {
@@ -134,7 +138,7 @@ export async function PUT() {
       const choiceStrings = choices.map((c) => `  "${c.name}"`).join(",\n");
       const replacement = `export const ${constantName} = [\n${choiceStrings},\n]`;
       const regex = new RegExp(`export const ${constantName}\\s*=\\s*\\[[\\s\\S]*?\\]`);
-      source = source.replace(regex, replacement);
+      optionsSource = optionsSource.replace(regex, replacement);
     }
 
     // Append new unmapped fields as comments
@@ -142,23 +146,27 @@ export async function PUT() {
     const newFields = inventoryTable.fields.filter((f) => !mappedAirtableNames.has(f.name));
 
     if (newFields.length > 0) {
-      const existingCommentBlock = source.includes("// ─── Unmapped Airtable Fields");
+      const existingCommentBlock = mappingSource.includes("// ─── Unmapped Airtable Fields");
       const commentLines = newFields
         .map((f) => `  // "${f.name}" (${f.type})`)
         .join("\n");
 
       if (!existingCommentBlock) {
-        source += `\n// ─── Unmapped Airtable Fields (synced ${new Date().toISOString().split("T")[0]}) ────\n`;
-        source += `// Add these to AIRTABLE_FIELD_MAP as needed:\n`;
-        source += commentLines + "\n";
+        mappingSource += `\n// ─── Unmapped Airtable Fields (synced ${new Date().toISOString().split("T")[0]}) ────\n`;
+        mappingSource += `// Add these to AIRTABLE_FIELD_MAP as needed:\n`;
+        mappingSource += commentLines + "\n";
       }
     }
 
-    writeFileSync(CONSTANTS_PATH, source, "utf-8");
+    writeFileSync(OPTIONS_PATH, optionsSource, "utf-8");
+    writeFileSync(AIRTABLE_MAP_PATH, mappingSource, "utf-8");
 
     return NextResponse.json({
       success: true,
-      backupPath: `lib/constants.${timestamp}.bak.ts`,
+      backupPath: [
+        `lib/constants.options.${timestamp}.bak.ts`,
+        `lib/constants.airtable.${timestamp}.bak.ts`,
+      ],
       newFieldsCount: newFields.length,
     });
   } catch (err) {

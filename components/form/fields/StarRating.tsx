@@ -2,7 +2,7 @@
 
 import { useFormContext } from "react-hook-form";
 import type { ItemizationFormData } from "@/lib/types";
-import { HELPER_TEXT } from "@/lib/constants";
+import { HELPER_TEXT } from "@/lib/constants/form";
 
 export function StarRating() {
   const { setValue, watch, formState: { errors } } = useFormContext<ItemizationFormData>();

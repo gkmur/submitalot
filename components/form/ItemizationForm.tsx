@@ -4,7 +4,7 @@ import { useForm, FormProvider, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useCallback, useRef, useEffect, type ReactNode } from "react";
 import { itemizationSchema } from "@/lib/schema";
-import { FORM_DEFAULTS, SECTION_FIELD_MAP } from "@/lib/constants";
+import { FORM_DEFAULTS, SECTION_FIELD_MAP } from "@/lib/constants/form";
 import type { ItemizationFormData, FormFieldName, SectionId, LinkedRecord } from "@/lib/types";
 import { saveHistory, saveTemplate, buildCarryForwardValues, isStorageAvailable, type StoredSubmission, type LinkedRecordFieldName, type HistoryEntry, type Template } from "@/lib/storage";
 import { scrubOrphanedFields } from "@/lib/conditional-logic";
@@ -31,11 +31,21 @@ const SECTION_DEFS: (SectionDef & { id: SectionId })[] = [
   { id: "restrictions", title: "Restrictions & Listing", requiredFields: ["listingDisaggregation"] as FormFieldName[] },
 ];
 
-function getSectionPreview(sectionId: SectionId, data: Partial<ItemizationFormData>): string[] {
+function getSectionPreview(
+  sectionId: SectionId,
+  data: Partial<ItemizationFormData>,
+  linkedRecords?: Partial<Record<LinkedRecordFieldName, LinkedRecord[]>>
+): string[] {
   const fields = SECTION_FIELD_MAP[sectionId];
   const previews: string[] = [];
   for (const f of fields) {
     if (previews.length >= 3) break;
+
+    if ((f === "brandPartner" || f === "seller") && linkedRecords?.[f]?.[0]?.name) {
+      previews.push(linkedRecords[f]?.[0]?.name ?? "");
+      continue;
+    }
+
     const val = data[f];
     if (val === undefined || val === null || val === "") continue;
     if (Array.isArray(val) && val.length === 0) continue;
@@ -67,6 +77,7 @@ export function ItemizationForm() {
   useEffect(() => { setStorageOk(isStorageAvailable()); }, []);
 
   const linkedRecordsRef = useRef<Partial<Record<LinkedRecordFieldName, LinkedRecord[]>>>({});
+  const idempotencyKeyRef = useRef<string | null>(null);
 
   const methods = useForm<ItemizationFormData>({
     resolver: zodResolver(itemizationSchema) as unknown as Resolver<ItemizationFormData>,
@@ -106,14 +117,27 @@ export function ItemizationForm() {
     setError(null);
 
     try {
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = crypto.randomUUID();
+      }
+
       const res = await fetch("/api/submit", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKeyRef.current,
+        },
+        body: JSON.stringify({
+          formData: data,
+          linkedRecords: linkedRecordsRef.current,
+        }),
       });
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
+        if (res.status === 409 || res.status === 422) {
+          idempotencyKeyRef.current = null;
+        }
         throw new Error(body.error || `Submission failed (${res.status})`);
       }
 
@@ -126,6 +150,7 @@ export function ItemizationForm() {
       setLastSubmitted(stored);
       setKeptSections(new Set(SECTION_DEFS.map((s) => s.id)));
       setSubmitted(true);
+      idempotencyKeyRef.current = null;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -137,7 +162,7 @@ export function ItemizationForm() {
     if (!lastSubmitted) return;
     const keptArray = [...keptSections] as SectionId[];
     const merged = buildCarryForwardValues(lastSubmitted, keptArray);
-    const scrubbed = scrubOrphanedFields(merged);
+    const scrubbed = scrubOrphanedFields(merged, lastSubmitted.linkedRecords);
 
     // Build initial records for carried-forward linked record fields
     const keptFields = new Set<string>(keptArray.flatMap((s) => SECTION_FIELD_MAP[s]));
@@ -153,6 +178,7 @@ export function ItemizationForm() {
     setLoadGeneration((g) => g + 1);
     setCurrentSection(0);
     setSubmitted(false);
+    idempotencyKeyRef.current = null;
   }
 
   function handleStartFresh() {
@@ -161,15 +187,17 @@ export function ItemizationForm() {
     setLoadGeneration((g) => g + 1);
     setCurrentSection(0);
     setSubmitted(false);
+    idempotencyKeyRef.current = null;
   }
 
   function handleCloneEntry(entry: HistoryEntry | Template) {
     const { formData, linkedRecords } = entry.data;
-    const scrubbed = scrubOrphanedFields(formData);
+    const scrubbed = scrubOrphanedFields(formData, linkedRecords);
     linkedRecordsRef.current = linkedRecords ?? {};
     methods.reset(scrubbed as ItemizationFormData);
     setLoadGeneration((g) => g + 1);
     setCurrentSection(0);
+    idempotencyKeyRef.current = null;
   }
 
   function handleSaveCurrentAsTemplate(name: string) {
@@ -200,7 +228,7 @@ export function ItemizationForm() {
           <h3 className="carry-forward-title">Keep for next submission?</h3>
           <div className="carry-forward-list">
             {SECTION_DEFS.map((section) => {
-              const previews = getSectionPreview(section.id, lastSubmitted.formData);
+              const previews = getSectionPreview(section.id, lastSubmitted.formData, lastSubmitted.linkedRecords);
               const kept = keptSections.has(section.id);
               return (
                 <button

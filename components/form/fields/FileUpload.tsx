@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import type { ItemizationFormData, FormFieldName, UploadedFile } from "@/lib/types";
-import { HELPER_TEXT } from "@/lib/constants";
+import { HELPER_TEXT } from "@/lib/constants/form";
 
 interface FileUploadProps {
   name: FormFieldName;
@@ -18,15 +18,44 @@ export function FileUpload({ name, label, required, accept }: FileUploadProps) {
   const helper = HELPER_TEXT[name];
   const error = errors[name];
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
-  const handleFiles = useCallback((fileList: FileList) => {
-    const newFiles: UploadedFile[] = Array.from(fileList).map((f) => ({
-      name: f.name,
-      url: URL.createObjectURL(f),
-      size: f.size,
-      type: f.type,
-    }));
-    setValue(name, [...files, ...newFiles] as never, { shouldValidate: true });
+  const handleFiles = useCallback(async (fileList: FileList) => {
+    if (fileList.length === 0) return;
+
+    setUploading(true);
+    setUploadError(null);
+
+    try {
+      const uploaded: UploadedFile[] = [];
+      for (const file of Array.from(fileList)) {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          throw new Error(body.error || `Upload failed (${res.status})`);
+        }
+
+        uploaded.push({
+          name: body.file?.name ?? file.name,
+          url: body.file?.url ?? "",
+          size: body.file?.size ?? file.size,
+          type: body.file?.type ?? file.type,
+        });
+      }
+
+      setValue(name, [...files, ...uploaded] as never, { shouldValidate: true });
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
   }, [files, name, setValue]);
 
   const removeFile = (index: number) => {
@@ -58,7 +87,7 @@ export function FileUpload({ name, label, required, accept }: FileUploadProps) {
           input.click();
         }}
       >
-        <p>Drop files here or click to browse</p>
+        <p>{uploading ? "Uploading..." : "Drop files here or click to browse"}</p>
       </div>
       {files.length > 0 && (
         <div className="file-list">
@@ -71,6 +100,7 @@ export function FileUpload({ name, label, required, accept }: FileUploadProps) {
         </div>
       )}
       {error && <p className="field-error">{error.message as string}</p>}
+      {!error && uploadError && <p className="field-error">{uploadError}</p>}
     </div>
   );
 }

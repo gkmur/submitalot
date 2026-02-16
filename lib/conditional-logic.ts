@@ -1,6 +1,7 @@
 import type { ItemizationFormData, FormFieldName } from "./types";
 
 type FormState = Partial<ItemizationFormData>;
+type LinkedRecordSnapshot = Partial<Record<"seller", Array<{ id: string; name: string }>>>;
 
 // Fields that are always visible — no conditions
 const ALWAYS_VISIBLE = new Set<FormFieldName>([
@@ -105,12 +106,17 @@ const CONDITIONAL_SCRUB_ORDER: FormFieldName[] = [
 ];
 
 // Scrubs orphaned conditional field values from a data snapshot before restore
-export function scrubOrphanedFields(data: Partial<ItemizationFormData>): Partial<ItemizationFormData> {
+export function scrubOrphanedFields(
+  data: Partial<ItemizationFormData>,
+  linkedRecords?: LinkedRecordSnapshot
+): Partial<ItemizationFormData> {
   const scrubbed = { ...data };
   for (const parent of CONDITIONAL_SCRUB_ORDER) {
     const value = scrubbed[parent];
     if (typeof value === "string") {
-      const toClear = getFieldsToClear(parent, value);
+      const sellerName = parent === "seller" ? linkedRecords?.seller?.[0]?.name : undefined;
+      const effectiveValue = sellerName ?? value;
+      const toClear = getFieldsToClear(parent, effectiveValue);
       for (const field of toClear) {
         delete scrubbed[field];
       }

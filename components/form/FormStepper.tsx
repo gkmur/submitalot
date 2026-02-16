@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import type { ItemizationFormData, FormFieldName } from "@/lib/types";
 
 export interface SectionDef {
@@ -18,20 +18,24 @@ interface FormStepperProps {
 type SectionStatus = "empty" | "complete" | "error";
 
 function useSectionStatus(section: SectionDef): SectionStatus {
-  const { formState, getValues } = useFormContext<ItemizationFormData>();
+  const { formState, control } = useFormContext<ItemizationFormData>();
   const { errors } = formState;
+  const watchedValues = useWatch({
+    control,
+    name: section.requiredFields,
+  });
+  const values = Array.isArray(watchedValues) ? watchedValues : [watchedValues];
 
   const hasErrors = section.requiredFields.some(
     (f) => errors[f as keyof ItemizationFormData]
   );
   if (hasErrors) return "error";
 
-  const allFilled = section.requiredFields.every((f) => {
-    const value = getValues(f as keyof ItemizationFormData);
+  const allFilled = values.every((value) => {
     if (value === undefined || value === null) return false;
     if (typeof value === "string") return value.length > 0;
     if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === "number") return true;
+    if (typeof value === "number") return Number.isFinite(value);
     if (typeof value === "boolean") return true;
     return !!value;
   });
