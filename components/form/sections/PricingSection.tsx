@@ -36,7 +36,7 @@ export function PricingSection() {
     <FormSection title="Pricing">
       <SelectDropdown name="currencyType" label="Currency Type" options={CURRENCY_TYPE_OPTIONS} required />
       <RadioGroup name="inlandFreight" label="Does this lot incur inland freight?" options={INLAND_FREIGHT_OPTIONS} required />
-      <TextInput name="marginTakeRate" label="Margin % (Take Rate)" type="number" required />
+      <TextInput name="marginTakeRate" label="Margin % (Take Rate)" type="number" unit="%" required />
 
       <RadioGroup
         name="priceColumns"
@@ -87,7 +87,7 @@ export function PricingSection() {
         </div>
       )}
 
-      <TextInput name="maxPercentOffAsking" label="Max Percent Off Asking" type="number" required />
+      <TextInput name="maxPercentOffAsking" label="Max Percent Off Asking" type="number" unit="%" required />
     </FormSection>
   );
 }
