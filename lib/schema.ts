@@ -81,6 +81,30 @@ export const itemizationSchema = z.object({
   restrictionsRegion: z.array(z.string()).optional().default([]),
   p0FireListing: z.boolean(),
   notes: z.string().optional().default(""),
+}).superRefine((data, ctx) => {
+  if (data.priceColumns === "None" && !data.flatOrReference) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["flatOrReference"],
+      message: "Flat Item Price or Reference is required when Price Columns is None",
+    });
+  }
+
+  if (data.flatOrReference === "Reference" && !data.referencePriceColumn) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["referencePriceColumn"],
+      message: "Reference Price Column is required when Flat Item Price or Reference is Reference",
+    });
+  }
+
+  if (data.flatOrReference === "Reference" && !data.increaseOrDecrease) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["increaseOrDecrease"],
+      message: "Increase or Decrease is required when Flat Item Price or Reference is Reference",
+    });
+  }
 });
 
 export type ItemizationSchemaType = z.infer<typeof itemizationSchema>;
