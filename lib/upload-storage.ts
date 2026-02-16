@@ -55,6 +55,30 @@ export function isValidUploadId(id: string) {
   return /^[a-f0-9-]{36}$/.test(id);
 }
 
+export function uploadPathForId(id: string) {
+  return `/api/upload/${id}`;
+}
+
+export function buildUploadUrl(origin: string, id: string) {
+  const normalizedOrigin = origin.replace(/\/+$/, "");
+  return `${normalizedOrigin}${uploadPathForId(id)}`;
+}
+
+export function isTrustedUploadUrl(urlValue: string, expectedOrigin: string) {
+  try {
+    const normalizedOrigin = new URL(expectedOrigin).origin;
+    const parsed = new URL(urlValue);
+    if (parsed.origin !== normalizedOrigin) return false;
+    if (parsed.username || parsed.password) return false;
+
+    const match = parsed.pathname.match(/^\/api\/upload\/([a-f0-9-]{36})$/);
+    if (!match) return false;
+    return isValidUploadId(match[1]);
+  } catch {
+    return false;
+  }
+}
+
 export async function persistUpload(file: File): Promise<StoredUploadMeta> {
   assertStorageDriver();
   maybeCleanupExpiredUploads();

@@ -5,9 +5,10 @@ import { createRecord } from "@/lib/airtable";
 import { AIRTABLE_FIELD_MAP } from "@/lib/constants/airtable";
 import type { LinkedRecord } from "@/lib/types";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getClientIp } from "@/lib/request";
+import { getClientIp, getRequestOrigin } from "@/lib/request";
 import { getIdempotencyEntry, hashPayload, setIdempotencyEntry } from "@/lib/idempotency";
 import { shouldSample, trackTelemetry } from "@/lib/telemetry";
+import { isTrustedUploadUrl } from "@/lib/upload-storage";
 
 export const runtime = "nodejs";
 
@@ -34,6 +35,7 @@ const submitEnvelopeSchema = z.object({
 
 type LinkedRecordSelections = Partial<Record<"brandPartner" | "seller" | "restrictionsCompany", LinkedRecord[]>>;
 type SubmitSuccess = { success: true; recordId: string };
+type UploadedFile = { url: string; name: string };
 
 export async function POST(request: Request) {
   const startedAt = Date.now();
@@ -125,7 +127,8 @@ export async function POST(request: Request) {
       );
     }
 
-    const fields = mapToAirtableFields(parsed.data.formData, parsed.data.linkedRecords);
+    const requestOrigin = getRequestOrigin(request.headers, request.url);
+    const fields = mapToAirtableFields(parsed.data.formData, parsed.data.linkedRecords, requestOrigin);
     const record = await createRecord("Inventory", fields);
     const responsePayload: SubmitSuccess = { success: true, recordId: record.id };
 
@@ -154,7 +157,9 @@ export async function POST(request: Request) {
         "error"
       );
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    const clientError =
+      process.env.NODE_ENV === "development" ? message : "Submission failed. Please try again.";
+    return NextResponse.json({ error: clientError }, { status: 500 });
   }
 }
 
@@ -203,7 +208,8 @@ function isRecordId(value: unknown): value is string {
 
 function mapToAirtableFields(
   data: ItemizationSchemaType,
-  linkedRecords?: LinkedRecordSelections
+  linkedRecords?: LinkedRecordSelections,
+  uploadOrigin?: string
 ): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
 
@@ -221,11 +227,34 @@ function mapToAirtableFields(
       continue;
     }
 
+    // Airtable labels differ from client-facing labels for these fields.
+    if (formKey === "flatOrReference") {
+      const normalized =
+        value === "Reference"
+          ? "Reference Price Column"
+          : value === "Flat Item Price"
+            ? "Flat Item Price Type"
+            : value;
+      fields[airtableKey] = normalized;
+      continue;
+    }
+
+    if (formKey === "increaseOrDecrease") {
+      const normalized =
+        value === "Increase"
+          ? "Increase by x% (+)"
+          : value === "Decrease"
+            ? "Decrease by x% (-)"
+            : value;
+      fields[airtableKey] = normalized;
+      continue;
+    }
+
     // File fields: Airtable expects [{url: "..."}]
     if (formKey === "inventoryFile" || formKey === "additionalFiles") {
-      const fileArray = value as Array<{ url: string; name: string }>;
-      if (fileArray.some((f) => !/^https?:\/\//i.test(f.url) || f.url.startsWith("blob:"))) {
-        throw new Error("File upload URLs must be persisted server URLs");
+      const fileArray = value as UploadedFile[];
+      if (!uploadOrigin || fileArray.some((f) => !isTrustedUploadUrl(f.url, uploadOrigin))) {
+        throw new Error("File upload URLs must point to this app's upload endpoint");
       }
       fields[airtableKey] = fileArray.map((f) => ({ url: f.url, filename: f.name }));
       continue;

@@ -32,15 +32,15 @@ export type BrandDemandSurplus =
   | "5: Internationally recognized brand with full-price wholesale presence in top retailers"
   | "4: Viral/trending brand high demand from live sellers- minimal off price distribution"
   | "3: Highly distributed in off-price"
-  | "2: Limited brand recognition"
-  | "1: Unknown or no-name brand";
+  | "2: Minimal recognition- popular product category"
+  | "1: No brand recognition only distribution is DTC";
 
 export type BrandDemandWholesale =
   | "5: Internationally recognized brand with full-price wholesale presence in top retailers"
   | "4: Viral/trending brand high demand from live sellers- minimal off price distribution"
   | "3: Highly distributed in off-price"
-  | "2: Limited brand recognition"
-  | "1: Unknown or no-name brand";
+  | "2: Minimal recognition- popular product category"
+  | "1: No brand recognition only distribution is DTC";
 
 export type LocationSurplus =
   | "5: Located in US"

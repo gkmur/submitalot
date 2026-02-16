@@ -12,6 +12,12 @@ const linkedRecord = z.object({
   name: z.string(),
 });
 
+const numberField = (label: string) =>
+  z.number({
+    required_error: `${label} is required`,
+    invalid_type_error: "Enter a valid number.",
+  });
+
 export const itemizationSchema = z.object({
   // Section 1: Primary Details
   brandPartner: z.string().min(1, "Brand Partner is required"),
@@ -24,7 +30,7 @@ export const itemizationSchema = z.object({
   // Section 2: Grading Details
   productAssortment: z.string().min(1, "Product assortment is required"),
   inventoryCondition: z.string().min(1, "Inventory condition is required"),
-  overallListingRating: z.number().min(1).max(5),
+  overallListingRating: numberField("Overall listing rating").min(1).max(5),
   pricingStrengthSurplus: z.string().optional().default(""),
   pricingStrengthWholesale: z.string().optional().default(""),
   brandDemandSurplus: z.string().optional().default(""),
@@ -53,7 +59,7 @@ export const itemizationSchema = z.object({
   packagingDetails: z.string().optional().default(""),
   inventoryAvailability: z.string().min(1, "Inventory availability is required"),
   fobOrExw: z.enum(["FOB", "EXW"], { required_error: "Select FOB or EXW" }),
-  leadTimeNumber: z.number().min(0),
+  leadTimeNumber: numberField("Lead time").min(0),
   leadTimeInterval: z.enum(["Hour(s)", "Day(s)", "Week(s)", "Month(s)"]),
 
   // Section 6: Qualification (commented out — can be re-enabled later)
@@ -62,14 +68,14 @@ export const itemizationSchema = z.object({
   // Section 7: Pricing
   currencyType: z.string().min(1, "Currency type is required"),
   inlandFreight: z.enum(["Yes", "No"]),
-  marginTakeRate: z.number().min(0).max(100),
+  marginTakeRate: numberField("Margin % (Take Rate)").min(0).max(100),
   priceColumns: z.enum(["Seller Price", "Buyer Price", "Both", "None"]),
   sellerPriceColumn: z.string().optional().default(""),
   buyerPriceColumn: z.string().optional().default(""),
   flatOrReference: z.enum(["Flat Item Price", "Reference"]).optional(),
   referencePriceColumn: z.string().optional().default(""),
   increaseOrDecrease: z.enum(["Increase", "Decrease"]).optional(),
-  maxPercentOffAsking: z.number().min(0).max(100),
+  maxPercentOffAsking: numberField("Max Percent Off Asking").min(0).max(100),
 
   // Section 8: Restrictions & Listing
   listingDisaggregation: z.string().min(1),

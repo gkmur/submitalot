@@ -1,11 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { AIRTABLE_FIELD_MAP } from "@/lib/constants/airtable";
-import type { ItemizationFormData } from "@/lib/types";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./admin.css";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Choice {
   id?: string;
@@ -22,6 +18,7 @@ interface FieldSchema {
     choices?: Choice[];
     linkedTableId?: string;
     prefersSingleRecordLink?: boolean;
+    result?: { type: string };
     [key: string]: unknown;
   };
   typeOptions?: {
@@ -39,15 +36,49 @@ interface TableSchema {
   fields: FieldSchema[];
 }
 
+interface MappingField {
+  name: string;
+  type: string;
+  writable: boolean;
+}
+
+interface MappingRow {
+  formKey: string;
+  mappedField: string | null;
+  status: "ok" | "missing" | "read_only" | "empty";
+  fieldType?: string;
+  suggestedField?: string;
+  suggestionReason?: string;
+}
+
 interface SyncDiff {
   newFields: string[];
   updatedOptions: Record<string, { field: string; before: string[]; after: string[] }>;
+  mappingIssues: Array<{
+    formKey: string;
+    mappedField: string | null;
+    status: "missing" | "read_only" | "empty";
+    fieldType?: string;
+    suggestedField?: string;
+    suggestionReason?: string;
+  }>;
+  mappingSuggestions: Array<{
+    formKey: string;
+    from: string | null;
+    to: string;
+    reason: string;
+  }>;
   timestamp: string;
 }
 
-type Tab = "fields" | "mapping" | "sync";
+interface MappingApiResponse {
+  fields: MappingField[];
+  rows: MappingRow[];
+  issuesCount: number;
+  suggestionCount: number;
+}
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+type Tab = "fields" | "mapping" | "sync";
 
 function getChoices(field: FieldSchema): Choice[] {
   return field.options?.choices ?? field.typeOptions?.choices ?? [];
@@ -57,7 +88,12 @@ function getLinkedTableId(field: FieldSchema): string | undefined {
   return field.options?.linkedTableId ?? field.typeOptions?.linkedTableId;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+function statusLabel(status: MappingRow["status"]) {
+  if (status === "ok") return "OK";
+  if (status === "missing") return "Missing";
+  if (status === "read_only") return "Read-only";
+  return "Empty";
+}
 
 export function AdminPanel() {
   const [tab, setTab] = useState<Tab>("fields");
@@ -67,93 +103,197 @@ export function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync state
+  const [mappingLoading, setMappingLoading] = useState(true);
+  const [mappingRows, setMappingRows] = useState<MappingRow[]>([]);
+  const [mappingFields, setMappingFields] = useState<MappingField[]>([]);
+  const [mappingSearch, setMappingSearch] = useState("");
+  const [mappingEdits, setMappingEdits] = useState<Record<string, string>>({});
+  const [mappingSaving, setMappingSaving] = useState(false);
+  const [mappingStatus, setMappingStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
+  const [mappingIssuesCount, setMappingIssuesCount] = useState(0);
+  const [mappingSuggestionCount, setMappingSuggestionCount] = useState(0);
+
   const [syncing, setSyncing] = useState(false);
   const [syncDiff, setSyncDiff] = useState<SyncDiff | null>(null);
-  const [syncResult, setSyncResult] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [syncResult, setSyncResult] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
-  // Mapping snippet
-  const [snippetField, setSnippetField] = useState<string | null>(null);
+  const loadSchema = useCallback(async () => {
+    const res = await fetch("/api/admin/schema");
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || `Schema fetch failed (${res.status})`);
+    }
 
-  useEffect(() => {
-    fetch("/api/admin/schema")
-      .then((r) => {
-        if (!r.ok) throw new Error(`${r.status}`);
-        return r.json();
-      })
-      .then((data: { tables: TableSchema[] }) => {
-        setTables(data.tables);
-        // Default to Inventory table if it exists
-        const inv = data.tables.find(
-          (t) => t.name === "Inventory" || t.name.toLowerCase().includes("inventory")
-        );
-        setSelectedTable(inv?.name ?? data.tables[0]?.name ?? "");
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
+    const schemaTables = data.tables as TableSchema[];
+    setTables(schemaTables);
+    const inventory = schemaTables.find(
+      (table) => table.name === "Inventory" || table.name.toLowerCase().includes("inventory")
+    );
+    setSelectedTable((current) => current || inventory?.name || schemaTables[0]?.name || "");
   }, []);
 
-  const currentTable = tables.find((t) => t.name === selectedTable);
+  const loadMappings = useCallback(async () => {
+    setMappingLoading(true);
+    setMappingStatus(null);
+    try {
+      const res = await fetch("/api/admin/mappings");
+      const data = (await res.json()) as MappingApiResponse & { error?: string };
+      if (!res.ok) {
+        throw new Error(data.error || `Mapping fetch failed (${res.status})`);
+      }
+      setMappingFields(data.fields);
+      setMappingRows(data.rows);
+      setMappingIssuesCount(data.issuesCount);
+      setMappingSuggestionCount(data.suggestionCount);
+      setMappingEdits({});
+    } catch (e) {
+      setMappingStatus({ type: "error", message: (e as Error).message });
+    } finally {
+      setMappingLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([loadSchema(), loadMappings()])
+      .catch((e: Error) => setError(e.message))
+      .finally(() => setLoading(false));
+  }, [loadMappings, loadSchema]);
+
+  const currentTable = useMemo(
+    () => tables.find((table) => table.name === selectedTable),
+    [tables, selectedTable]
+  );
 
   const filteredFields = useMemo(() => {
     if (!currentTable) return [];
     if (!search) return currentTable.fields;
+
     const q = search.toLowerCase();
     return currentTable.fields.filter(
-      (f) =>
-        f.name.toLowerCase().includes(q) ||
-        f.type.toLowerCase().includes(q)
+      (field) =>
+        field.name.toLowerCase().includes(q) ||
+        field.type.toLowerCase().includes(q) ||
+        (field.description ?? "").toLowerCase().includes(q)
     );
   }, [currentTable, search]);
 
-  // Build mapping data
-  const reverseMap = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const [formKey, atKey] of Object.entries(AIRTABLE_FIELD_MAP)) {
-      if (atKey) m[atKey] = formKey;
-    }
-    return m;
-  }, []);
+  const filteredMappingRows = useMemo(() => {
+    if (!mappingSearch.trim()) return mappingRows;
 
-  const mappingRows = useMemo(() => {
-    if (!currentTable) return [];
+    const q = mappingSearch.toLowerCase().trim();
+    return mappingRows.filter((row) => {
+      const haystack = [
+        row.formKey,
+        row.mappedField ?? "",
+        row.suggestedField ?? "",
+        row.fieldType ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [mappingRows, mappingSearch]);
 
-    const airtableNames = new Set(currentTable.fields.map((f) => f.name));
-    const formKeys = Object.keys(AIRTABLE_FIELD_MAP) as (keyof ItemizationFormData)[];
+  const writableFieldNames = useMemo(
+    () => mappingFields.filter((field) => field.writable).map((field) => field.name),
+    [mappingFields]
+  );
 
-    type MappingRow = {
-      airtableName: string | null;
-      formKey: string | null;
-      status: "mapped" | "unmapped-at" | "unmapped-form";
-    };
+  const dirtyCount = useMemo(
+    () =>
+      mappingRows.filter((row) => {
+        const edited = mappingEdits[row.formKey];
+        if (edited === undefined) return false;
+        return edited.trim() !== (row.mappedField ?? "");
+      }).length,
+    [mappingEdits, mappingRows]
+  );
 
-    const rows: MappingRow[] = [];
+  function setEdit(formKey: string, value: string) {
+    setMappingEdits((current) => ({ ...current, [formKey]: value }));
+  }
 
-    // Mapped pairs first
-    for (const [formKey, atName] of Object.entries(AIRTABLE_FIELD_MAP)) {
-      if (atName && airtableNames.has(atName)) {
-        rows.push({ airtableName: atName, formKey, status: "mapped" });
+  async function handleSaveMappings() {
+    const updates: Record<string, string> = {};
+
+    for (const row of mappingRows) {
+      const edited = mappingEdits[row.formKey];
+      if (edited === undefined) continue;
+      const trimmed = edited.trim();
+      if (!trimmed) continue;
+      if (trimmed !== (row.mappedField ?? "")) {
+        updates[row.formKey] = trimmed;
       }
     }
 
-    // Unmapped Airtable fields
-    const mappedAtNames = new Set(Object.values(AIRTABLE_FIELD_MAP).filter(Boolean));
-    for (const field of currentTable.fields) {
-      if (!mappedAtNames.has(field.name)) {
-        rows.push({ airtableName: field.name, formKey: null, status: "unmapped-at" });
-      }
+    if (Object.keys(updates).length === 0) {
+      setMappingStatus({ type: "success", message: "No mapping changes to save." });
+      return;
     }
 
-    // Unmapped form fields (mapped to a name not found in current table)
-    for (const formKey of formKeys) {
-      const atName = AIRTABLE_FIELD_MAP[formKey];
-      if (atName && !airtableNames.has(atName)) {
-        rows.push({ airtableName: atName, formKey: formKey as string, status: "unmapped-form" });
+    setMappingSaving(true);
+    setMappingStatus(null);
+    try {
+      const res = await fetch("/api/admin/mappings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ updates }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save mappings");
       }
-    }
 
-    return rows;
-  }, [currentTable, reverseMap]);
+      setMappingRows(data.rows as MappingRow[]);
+      setMappingIssuesCount(Number(data.issuesCount ?? 0));
+      setMappingSuggestionCount(Number(data.suggestionCount ?? 0));
+      setMappingEdits({});
+      setMappingStatus({
+        type: "success",
+        message: `Saved ${data.changedCount ?? 0} mapping change(s).`,
+      });
+    } catch (e) {
+      setMappingStatus({ type: "error", message: (e as Error).message });
+    } finally {
+      setMappingSaving(false);
+    }
+  }
+
+  async function handleApplySuggestions() {
+    setMappingSaving(true);
+    setMappingStatus(null);
+    try {
+      const res = await fetch("/api/admin/mappings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applySuggestions: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to apply suggestions");
+      }
+
+      setMappingRows(data.rows as MappingRow[]);
+      setMappingIssuesCount(Number(data.issuesCount ?? 0));
+      setMappingSuggestionCount(Number(data.suggestionCount ?? 0));
+      setMappingEdits({});
+      setMappingStatus({
+        type: "success",
+        message: `Applied ${data.changedCount ?? 0} suggested mapping fix(es).`,
+      });
+    } catch (e) {
+      setMappingStatus({ type: "error", message: (e as Error).message });
+    } finally {
+      setMappingSaving(false);
+    }
+  }
 
   async function handleSyncPreview() {
     setSyncing(true);
@@ -162,8 +302,8 @@ export function AdminPanel() {
     try {
       const res = await fetch("/api/admin/sync", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Sync failed");
-      setSyncDiff(data.diff);
+      if (!res.ok) throw new Error(data.error || "Sync preview failed");
+      setSyncDiff(data.diff as SyncDiff);
     } catch (e) {
       setSyncResult({ type: "error", message: (e as Error).message });
     } finally {
@@ -175,17 +315,24 @@ export function AdminPanel() {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const res = await fetch("/api/admin/sync", { method: "PUT" });
+      const res = await fetch("/api/admin/sync", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applySuggestedMappings: true }),
+      });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Apply failed");
+      if (!res.ok) throw new Error(data.error || "Sync apply failed");
+
       const backupPaths = Array.isArray(data.backupPath)
-        ? data.backupPath.join(", ")
-        : String(data.backupPath ?? "n/a");
+        ? data.backupPath.filter((path: unknown) => typeof path === "string")
+        : [];
+      const backupSummary = backupPaths.length > 0 ? backupPaths.join(", ") : "none";
       setSyncResult({
         type: "success",
-        message: `Synced. Backup: ${backupPaths}. ${data.newFieldsCount} new field(s) detected.`,
+        message: `Synced options (${data.updatedOptionsCount ?? 0}) and mappings (${data.mappingUpdatedCount ?? 0}). Backup: ${backupSummary}.`,
       });
       setSyncDiff(null);
+      await loadMappings();
     } catch (e) {
       setSyncResult({ type: "error", message: (e as Error).message });
     } finally {
@@ -193,47 +340,65 @@ export function AdminPanel() {
     }
   }
 
-  if (loading) return <div className="admin"><div className="admin-loading">Loading schema...</div></div>;
-  if (error) return <div className="admin"><div className="admin-error">Failed to load schema: {error}</div></div>;
+  if (loading) {
+    return (
+      <div className="admin">
+        <div className="admin-loading">Loading schema and mappings...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="admin">
+        <div className="admin-error">Failed to load admin data: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin">
       <div className="admin-header">
         <h1>Airtable Dev Panel</h1>
         <span>{tables.length} tables</span>
+        <span>{mappingIssuesCount} mapping issue(s)</span>
       </div>
 
       <div className="admin-tabs">
-        {(["fields", "mapping", "sync"] as Tab[]).map((t) => (
+        {(["fields", "mapping", "sync"] as Tab[]).map((nextTab) => (
           <button
-            key={t}
+            key={nextTab}
             className="admin-tab"
-            data-active={tab === t}
-            onClick={() => setTab(t)}
+            data-active={tab === nextTab}
+            onClick={() => setTab(nextTab)}
           >
-            {t === "fields" ? "Field Browser" : t === "mapping" ? "Mapping" : "Sync"}
+            {nextTab === "fields" ? "Field Browser" : nextTab === "mapping" ? "Mappings" : "Sync"}
           </button>
         ))}
       </div>
 
-      {/* ─── Tab: Field Browser ───────────────────────── */}
       {tab === "fields" && (
         <>
           <div className="browser-controls">
             <select
               className="select"
               value={selectedTable}
-              onChange={(e) => { setSelectedTable(e.target.value); setSearch(""); }}
+              onChange={(event) => {
+                setSelectedTable(event.target.value);
+                setSearch("");
+              }}
             >
-              {tables.map((t) => (
-                <option key={t.id} value={t.name}>{t.name} ({t.fields.length} fields)</option>
+              {tables.map((table) => (
+                <option key={table.id} value={table.name}>
+                  {table.name} ({table.fields.length} fields)
+                </option>
               ))}
             </select>
             <input
               className="input"
               placeholder="Filter fields..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(event) => setSearch(event.target.value)}
             />
           </div>
 
@@ -249,32 +414,42 @@ export function AdminPanel() {
                 </tr>
               </thead>
               <tbody>
-                {filteredFields.map((f) => (
-                  <tr key={f.id}>
+                {filteredFields.map((field) => (
+                  <tr key={field.id}>
                     <td>
-                      <span className="field-name">{f.name}</span>
-                      {f.description && <div className="field-description">{f.description}</div>}
+                      <span className="field-name">{field.name}</span>
+                      {field.description ? (
+                        <div className="field-description">{field.description}</div>
+                      ) : null}
                     </td>
                     <td>
-                      <span className="type-badge" data-type={f.type}>{f.type}</span>
+                      <span className="type-badge" data-type={field.type}>
+                        {field.type}
+                      </span>
                     </td>
                     <td>
-                      {(f.type === "singleSelect" || f.type === "multipleSelects") && (
+                      {(field.type === "singleSelect" || field.type === "multipleSelects") && (
                         <div className="choice-pills">
-                          {getChoices(f).map((c) => (
-                            <span key={c.name} className="choice-pill">{c.name}</span>
+                          {getChoices(field).map((choice) => (
+                            <span key={choice.name} className="choice-pill">
+                              {choice.name}
+                            </span>
                           ))}
                         </div>
                       )}
-                      {f.type === "multipleRecordLinks" && (
+                      {field.type === "multipleRecordLinks" && (
                         <span className="choice-pill">
-                          linked: {getLinkedTableId(f) ?? "unknown"}
-                          {f.options?.prefersSingleRecordLink ? " (single)" : ""}
+                          linked: {getLinkedTableId(field) ?? "unknown"}
+                          {field.options?.prefersSingleRecordLink ? " (single)" : ""}
                         </span>
                       )}
-                      {f.type === "formula" && f.options?.result != null && (
+                      {field.type === "formula" && field.options?.result != null && (
                         <span className="choice-pill">
-                          {"result: " + String((f.options.result as Record<string, string>)?.type ?? "unknown")}
+                          {"result: " +
+                            String(
+                              (field.options.result as Record<string, string> | undefined)?.type ??
+                                "unknown"
+                            )}
                         </span>
                       )}
                     </td>
@@ -286,133 +461,179 @@ export function AdminPanel() {
         </>
       )}
 
-      {/* ─── Tab: Mapping View ────────────────────────── */}
       {tab === "mapping" && (
         <>
           <div className="browser-controls">
-            <select
-              className="select"
-              value={selectedTable}
-              onChange={(e) => { setSelectedTable(e.target.value); setSnippetField(null); }}
-            >
-              {tables.map((t) => (
-                <option key={t.id} value={t.name}>{t.name}</option>
-              ))}
-            </select>
+            <input
+              className="input"
+              placeholder="Filter by form key or mapped field..."
+              value={mappingSearch}
+              onChange={(event) => setMappingSearch(event.target.value)}
+            />
           </div>
 
-          <div className="mapping-grid">
-            <div className="mapping-grid-header">
-              <span>Airtable Field</span>
-              <span></span>
-              <span>Form Field</span>
-            </div>
-
-            {mappingRows.map((row, i) => (
-              <div key={i} className="mapping-row">
-                <div className="mapping-cell">
-                  <span className={`mapping-dot ${row.status}`} />
-                  <span className={`field-name ${row.status !== "mapped" ? "muted" : ""}`}>
-                    {row.airtableName ?? "—"}
-                  </span>
-                </div>
-                <div className="mapping-arrow">
-                  {row.status === "mapped" ? "↔" : "·"}
-                </div>
-                <div
-                  className="mapping-cell"
-                  style={{ cursor: row.status === "unmapped-at" ? "pointer" : undefined }}
-                  onClick={() => {
-                    if (row.status === "unmapped-at") {
-                      setSnippetField(snippetField === row.airtableName ? null : row.airtableName);
-                    }
-                  }}
-                >
-                  <span className={`field-name ${row.status === "unmapped-at" ? "muted" : row.status === "unmapped-form" ? "" : ""}`}>
-                    {row.formKey ?? (row.status === "unmapped-at" ? "click for snippet" : "—")}
-                  </span>
-                </div>
-              </div>
-            ))}
+          <div className="sync-actions">
+            <button className="sync-btn" disabled={mappingSaving} onClick={handleApplySuggestions}>
+              {mappingSaving ? "Applying..." : `Auto-Apply Suggestions (${mappingSuggestionCount})`}
+            </button>
+            <button className="sync-btn" disabled={mappingSaving || dirtyCount === 0} onClick={handleSaveMappings}>
+              {mappingSaving ? "Saving..." : `Save Mapping Edits (${dirtyCount})`}
+            </button>
+            <button className="sync-btn" disabled={mappingSaving} onClick={loadMappings}>
+              Reload
+            </button>
           </div>
 
-          {snippetField && (
-            <div className="mapping-snippet">
-              {`// In lib/constants.ts → AIRTABLE_FIELD_MAP\n`}
-              {`  yourFormKey: "${snippetField}",\n\n`}
-              {`// In lib/types.ts → ItemizationFormData\n`}
-              {`  yourFormKey: string; // adjust type as needed`}
-            </div>
+          {mappingStatus ? (
+            <div className={`sync-status ${mappingStatus.type}`}>{mappingStatus.message}</div>
+          ) : null}
+
+          {mappingLoading ? (
+            <div className="empty-state">Loading mapping table...</div>
+          ) : (
+            <>
+              <datalist id="mapping-airtable-fields">
+                {writableFieldNames.map((fieldName) => (
+                  <option key={fieldName} value={fieldName} />
+                ))}
+              </datalist>
+
+              <table className="field-table mapping-table">
+                <thead>
+                  <tr>
+                    <th>Form Field</th>
+                    <th>Airtable Field Mapping</th>
+                    <th>Status</th>
+                    <th>Suggested Fix</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredMappingRows.map((row) => {
+                    const edited = mappingEdits[row.formKey];
+                    const value = edited ?? row.mappedField ?? "";
+                    return (
+                      <tr key={row.formKey}>
+                        <td>
+                          <span className="field-name">{row.formKey}</span>
+                        </td>
+                        <td>
+                          <input
+                            className="input mapping-input"
+                            list="mapping-airtable-fields"
+                            value={value}
+                            onChange={(event) => setEdit(row.formKey, event.target.value)}
+                          />
+                        </td>
+                        <td>
+                          <span className={`mapping-status mapping-status--${row.status}`}>
+                            {statusLabel(row.status)}
+                            {row.fieldType ? ` (${row.fieldType})` : ""}
+                          </span>
+                        </td>
+                        <td>
+                          {row.suggestedField ? (
+                            <button
+                              className="mapping-suggestion-btn"
+                              onClick={() => setEdit(row.formKey, row.suggestedField ?? "")}
+                            >
+                              Use {row.suggestedField}
+                            </button>
+                          ) : (
+                            <span className="field-description">—</span>
+                          )}
+                          {row.suggestionReason ? (
+                            <div className="field-description">{row.suggestionReason}</div>
+                          ) : null}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </>
           )}
         </>
       )}
 
-      {/* ─── Tab: Sync ────────────────────────────────── */}
       {tab === "sync" && (
         <div className="sync-panel">
-          <button
-            className="sync-btn"
-            disabled={syncing}
-            onClick={handleSyncPreview}
-          >
-            {syncing ? "Checking..." : "Sync from Airtable"}
+          <button className="sync-btn" disabled={syncing} onClick={handleSyncPreview}>
+            {syncing ? "Checking..." : "Preview Sync from Airtable"}
           </button>
 
-          {syncResult && (
-            <div className={`sync-status ${syncResult.type}`}>
-              {syncResult.message}
-            </div>
-          )}
+          {syncResult ? <div className={`sync-status ${syncResult.type}`}>{syncResult.message}</div> : null}
 
-          {syncDiff && (
+          {syncDiff ? (
             <>
-              {syncDiff.newFields.length > 0 && (
+              {syncDiff.mappingIssues.length > 0 ? (
                 <div className="diff-section">
-                  <h3>New Airtable fields (not mapped)</h3>
+                  <h3>Mapping issues</h3>
                   <ul className="diff-list">
-                    {syncDiff.newFields.map((f) => (
-                      <li key={f} className="added">+ {f}</li>
+                    {syncDiff.mappingIssues.map((issue) => (
+                      <li key={`${issue.formKey}-${issue.mappedField ?? "empty"}`}>
+                        {issue.formKey}: {issue.mappedField ?? "—"} [{issue.status}]
+                        {issue.suggestedField ? ` -> ${issue.suggestedField}` : ""}
+                      </li>
                     ))}
                   </ul>
                 </div>
-              )}
+              ) : null}
 
-              {Object.keys(syncDiff.updatedOptions).length > 0 && (
+              {syncDiff.newFields.length > 0 ? (
+                <div className="diff-section">
+                  <h3>Unmapped Airtable fields</h3>
+                  <ul className="diff-list">
+                    {syncDiff.newFields.map((fieldName) => (
+                      <li key={fieldName} className="added">
+                        + {fieldName}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
+              {Object.keys(syncDiff.updatedOptions).length > 0 ? (
                 <div className="diff-section">
                   <h3>Option changes</h3>
                   {Object.entries(syncDiff.updatedOptions).map(([constant, info]) => {
-                    const added = info.after.filter((o) => !info.before.includes(o));
-                    const removed = info.before.filter((o) => !info.after.includes(o));
+                    const added = info.after.filter((option) => !info.before.includes(option));
+                    const removed = info.before.filter((option) => !info.after.includes(option));
                     return (
                       <div key={constant} className="diff-option-group">
-                        <h4>{constant} ({info.field})</h4>
+                        <h4>
+                          {constant} ({info.field})
+                        </h4>
                         <ul className="diff-list">
-                          {added.map((o) => <li key={o} className="added">+ {o}</li>)}
-                          {removed.map((o) => <li key={o} className="removed">- {o}</li>)}
+                          {added.map((option) => (
+                            <li key={`add-${constant}-${option}`} className="added">
+                              + {option}
+                            </li>
+                          ))}
+                          {removed.map((option) => (
+                            <li key={`remove-${constant}-${option}`} className="removed">
+                              - {option}
+                            </li>
+                          ))}
                         </ul>
                       </div>
                     );
                   })}
                 </div>
-              )}
+              ) : null}
 
-              {syncDiff.newFields.length === 0 && Object.keys(syncDiff.updatedOptions).length === 0 && (
+              {syncDiff.mappingIssues.length === 0 &&
+              syncDiff.newFields.length === 0 &&
+              Object.keys(syncDiff.updatedOptions).length === 0 ? (
                 <div className="sync-status info">Everything is in sync. No changes detected.</div>
-              )}
-
-              {(syncDiff.newFields.length > 0 || Object.keys(syncDiff.updatedOptions).length > 0) && (
+              ) : (
                 <div className="sync-actions">
-                  <button
-                    className="sync-btn danger"
-                    disabled={syncing}
-                    onClick={handleSyncApply}
-                  >
-                    {syncing ? "Applying..." : "Apply Changes"}
+                  <button className="sync-btn danger" disabled={syncing} onClick={handleSyncApply}>
+                    {syncing ? "Applying..." : "Apply Sync Fixes"}
                   </button>
                 </div>
               )}
             </>
-          )}
+          ) : null}
         </div>
       )}
     </div>

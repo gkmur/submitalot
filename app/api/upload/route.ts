@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp, getRequestOrigin } from "@/lib/request";
-import { persistUpload } from "@/lib/upload-storage";
+import { buildUploadUrl, persistUpload } from "@/lib/upload-storage";
 import { shouldSample, trackTelemetry } from "@/lib/telemetry";
 
 export const runtime = "nodejs";
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
         name: stored.originalName,
         type: stored.type,
         size: stored.size,
-        url: `${origin}/api/upload/${stored.id}`,
+        url: buildUploadUrl(origin, stored.id),
       },
     });
   } catch (err) {
@@ -105,7 +105,8 @@ export async function POST(request: Request) {
         "error"
       );
     }
-    return NextResponse.json({ error: message }, { status: 500 });
+    const clientError = process.env.NODE_ENV === "development" ? message : "Upload failed.";
+    return NextResponse.json({ error: clientError }, { status: 500 });
   }
 }
 

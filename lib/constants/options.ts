@@ -64,16 +64,16 @@ export const BRAND_DEMAND_SURPLUS_OPTIONS: RadioOption<BrandDemandSurplus>[] = [
   { value: "5: Internationally recognized brand with full-price wholesale presence in top retailers", label: "5: Top-tier global brand", color: "#22c55e" },
   { value: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", label: "4: Viral/trending brand", color: "#eab308" },
   { value: "3: Highly distributed in off-price", label: "3: Broad off-price distro", color: "#f97316" },
-  { value: "2: Limited brand recognition", label: "2: Limited recognition", color: "#ef4444" },
-  { value: "1: Unknown or no-name brand", label: "1: Unknown/no-name", color: "#dc2626" },
+  { value: "2: Minimal recognition- popular product category", label: "2: Minimal recognition", color: "#ef4444" },
+  { value: "1: No brand recognition only distribution is DTC", label: "1: No recognition", color: "#dc2626" },
 ];
 
 export const BRAND_DEMAND_WHOLESALE_OPTIONS: RadioOption<BrandDemandWholesale>[] = [
   { value: "5: Internationally recognized brand with full-price wholesale presence in top retailers", label: "5: Top-tier global brand", color: "#22c55e" },
   { value: "4: Viral/trending brand high demand from live sellers- minimal off price distribution", label: "4: Viral/trending brand", color: "#eab308" },
   { value: "3: Highly distributed in off-price", label: "3: Broad off-price distro", color: "#f97316" },
-  { value: "2: Limited brand recognition", label: "2: Limited recognition", color: "#ef4444" },
-  { value: "1: Unknown or no-name brand", label: "1: Unknown/no-name", color: "#dc2626" },
+  { value: "2: Minimal recognition- popular product category", label: "2: Minimal recognition", color: "#ef4444" },
+  { value: "1: No brand recognition only distribution is DTC", label: "1: No recognition", color: "#dc2626" },
 ];
 
 export const LOCATION_SURPLUS_OPTIONS: RadioOption<LocationSurplus>[] = [

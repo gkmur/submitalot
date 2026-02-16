@@ -6,6 +6,8 @@ const BASE_URL = "https://api.airtable.com/v0";
 const REQUEST_TIMEOUT_MS = envInt(process.env.AIRTABLE_TIMEOUT_MS, 10000);
 const LIST_MAX_ATTEMPTS = envInt(process.env.AIRTABLE_LIST_MAX_ATTEMPTS, 3);
 const LIST_BASE_BACKOFF_MS = envInt(process.env.AIRTABLE_LIST_BASE_BACKOFF_MS, 250);
+const CREATE_MAX_ATTEMPTS = envInt(process.env.AIRTABLE_CREATE_MAX_ATTEMPTS, 3);
+const CREATE_BASE_BACKOFF_MS = envInt(process.env.AIRTABLE_CREATE_BASE_BACKOFF_MS, 300);
 
 function getConfig() {
   const pat = process.env.AIRTABLE_PAT;
@@ -76,36 +78,103 @@ export async function createRecord(
   const startedAt = Date.now();
   const sample = shouldSample();
   const { pat, baseId } = getConfig();
-  const res = await fetchWithTimeout(`${BASE_URL}/${baseId}/${encodeURIComponent(tableName)}`, {
-    method: "POST",
-    headers: headers(pat),
-    body: JSON.stringify({ fields }),
-  });
+  let lastError: Error | null = null;
+  const url = `${BASE_URL}/${baseId}/${encodeURIComponent(tableName)}`;
 
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    if (sample) {
-      trackTelemetry(
-        "airtable.create.error",
-        {
-          table: tableName,
-          status: res.status,
-          durationMs: Date.now() - startedAt,
-        },
-        "error"
-      );
+  for (let attempt = 0; attempt < CREATE_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const res = await fetchWithTimeout(url, {
+        method: "POST",
+        headers: headers(pat),
+        body: JSON.stringify({ fields }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (sample) {
+          trackTelemetry("airtable.create.success", {
+            table: tableName,
+            attempts: attempt + 1,
+            durationMs: Date.now() - startedAt,
+          });
+        }
+        return { id: data.id };
+      }
+
+      if (isRetryableStatus(res.status) && attempt < CREATE_MAX_ATTEMPTS - 1) {
+        const retryAfterMs = parseRetryAfterMs(res.headers.get("retry-after"));
+        const backoff = retryAfterMs ?? CREATE_BASE_BACKOFF_MS * (attempt + 1);
+        if (sample) {
+          trackTelemetry(
+            "airtable.create.retry",
+            {
+              table: tableName,
+              attempt: attempt + 1,
+              status: res.status,
+              backoffMs: backoff,
+            },
+            "warn"
+          );
+        }
+        await sleep(backoff);
+        continue;
+      }
+
+      const error = await res.json().catch(() => ({}));
+      const wrapped = new Error(`Airtable create failed (${res.status}): ${JSON.stringify(error)}`);
+      lastError = wrapped;
+      if (sample) {
+        trackTelemetry(
+          "airtable.create.error",
+          {
+            table: tableName,
+            status: res.status,
+            attempts: attempt + 1,
+            durationMs: Date.now() - startedAt,
+          },
+          "error"
+        );
+      }
+      throw wrapped;
+    } catch (err) {
+      const wrapped = err instanceof Error ? err : new Error("Unknown Airtable create error");
+      lastError = wrapped;
+
+      if (attempt < CREATE_MAX_ATTEMPTS - 1 && isRetryableFetchError(err)) {
+        const backoff = CREATE_BASE_BACKOFF_MS * (attempt + 1);
+        if (sample) {
+          trackTelemetry(
+            "airtable.create.retry_error",
+            {
+              table: tableName,
+              attempt: attempt + 1,
+              message: wrapped.message,
+              backoffMs: backoff,
+            },
+            "warn"
+          );
+        }
+        await sleep(backoff);
+        continue;
+      }
+
+      if (sample) {
+        trackTelemetry(
+          "airtable.create.error",
+          {
+            table: tableName,
+            attempts: attempt + 1,
+            message: wrapped.message,
+            durationMs: Date.now() - startedAt,
+          },
+          "error"
+        );
+      }
+      throw wrapped;
     }
-    throw new Error(`Airtable create failed (${res.status}): ${JSON.stringify(error)}`);
   }
 
-  const data = await res.json();
-  if (sample) {
-    trackTelemetry("airtable.create.success", {
-      table: tableName,
-      durationMs: Date.now() - startedAt,
-    });
-  }
-  return { id: data.id };
+  throw lastError ?? new Error("Airtable create failed after retries");
 }
 
 export async function listRecords(
