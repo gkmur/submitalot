@@ -8,14 +8,22 @@ import { getClientIp } from "./request";
 import { shouldSample, trackTelemetry } from "./telemetry";
 import { getEffectiveFieldMap } from "./runtime-admin-config";
 import {
+  getLinkedSearchFieldSnapshot,
   getLinkedSearchCache,
   makeLinkedSearchCacheKey,
   runLinkedSearchWithInflight,
+  setLinkedSearchFieldSnapshot,
   setLinkedSearchCache,
   type CachedLinkedRecord,
 } from "./linked-record-search-cache";
 
-export type LinkedRecordFieldName = keyof typeof LINKED_RECORD_FIELDS;
+const LINKED_LOOKUP_FIELD_NAMES = [
+  "brandPartner",
+  "seller",
+  "restrictionsCompany",
+] as const;
+
+export type LinkedRecordFieldName = (typeof LINKED_LOOKUP_FIELD_NAMES)[number];
 
 export interface LinkedRecordSearchResult {
   records: Array<{ id: string; name: string; metadata?: Record<string, string> }>;
@@ -23,6 +31,19 @@ export interface LinkedRecordSearchResult {
 }
 
 type HeaderSource = Pick<Headers, "get">;
+type LookupFailureKind =
+  | "timeout"
+  | "config_missing"
+  | "access_denied"
+  | "schema_drift"
+  | "unknown";
+type EffectiveLookupConfig = {
+  table: string;
+  displayField: string;
+  previewFields: string[];
+  sortField?: string;
+  sortDirection?: "asc" | "desc";
+};
 
 const SEARCH_WINDOW_MS = 60_000;
 const SEARCH_MAX_REQUESTS = envInt(process.env.SEARCH_RATE_LIMIT_MAX, 120);
@@ -30,6 +51,21 @@ const RESOLVED_CONFIG_TTL_MS = envInt(
   process.env.LINKED_CONFIG_CACHE_TTL_MS,
   10 * 60 * 1000
 );
+const TABLE_NAME_FALLBACKS: Record<LinkedRecordFieldName, string[]> = {
+  brandPartner: ["Admins", "Brand Partners", "Brand Partner"],
+  seller: ["Sellers", "Seller"],
+  restrictionsCompany: ["Companies", "Company"],
+};
+const DISPLAY_FIELD_FALLBACKS: Record<LinkedRecordFieldName, string[]> = {
+  brandPartner: ["Name", "Email", "Admin ID"],
+  seller: ["Seller", "COMPANY_NAME", "NAME", "SELLER_ID", "Name", "ID"],
+  restrictionsCompany: ["Company Name", "ID", "Name", "Company"],
+};
+const PREVIEW_FIELD_FALLBACKS: Record<LinkedRecordFieldName, string[]> = {
+  brandPartner: ["Email", "Admin ID"],
+  seller: ["Company", "COMPANY_NAME", "NAME", "SELLER_ID"],
+  restrictionsCompany: ["ID", "Name"],
+};
 
 declare global {
   // eslint-disable-next-line no-var
@@ -84,6 +120,19 @@ function sanitizeQuery(query: string) {
   return query.replace(/["\\\n\r]/g, "").trim();
 }
 
+function uniqueStrings(values: Array<string | undefined>) {
+  const seen = new Set<string>();
+  const next: string[] = [];
+  for (const value of values) {
+    if (typeof value !== "string") continue;
+    const trimmed = value.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    next.push(trimmed);
+  }
+  return next;
+}
+
 function buildFilterFormula(query: string, displayField: string) {
   if (!query) return undefined;
   return `SEARCH(LOWER("${query}"), LOWER({${displayField}}))`;
@@ -129,16 +178,59 @@ function pickDisplayName(fields: Record<string, unknown>, displayField: string) 
   return "";
 }
 
-function isRecoverableAirtableSchemaError(message: string) {
+function classifyLookupFailure(message: string): LookupFailureKind {
   const normalized = message.toLowerCase();
-  return (
+  if (normalized.includes("timed out")) return "timeout";
+  if (
+    normalized.includes("airtable_pat is not configured") ||
+    normalized.includes("airtable_base_id is not configured")
+  ) {
+    return "config_missing";
+  }
+  if (
+    normalized.includes("airtable list failed (401)") ||
+    normalized.includes("airtable list failed (403)") ||
+    normalized.includes("invalid_permissions") ||
+    normalized.includes("authentication_required") ||
+    normalized.includes("authentication required")
+  ) {
+    return "access_denied";
+  }
+  if (
     normalized.includes("unknown_field_name") ||
     normalized.includes("unknown field") ||
     normalized.includes("invalid_filter_by_formula") ||
     normalized.includes("formula") ||
     normalized.includes("cannot sort") ||
-    normalized.includes("sort")
-  );
+    normalized.includes("sort") ||
+    normalized.includes("table_not_found") ||
+    normalized.includes("model_id_not_found") ||
+    normalized.includes("could not find table") ||
+    normalized.includes("table") && normalized.includes("not found")
+  ) {
+    return "schema_drift";
+  }
+  return "unknown";
+}
+
+function isRecoverableAirtableLookupError(message: string) {
+  return classifyLookupFailure(message) === "schema_drift";
+}
+
+function userFacingLookupError(kind: LookupFailureKind) {
+  if (kind === "timeout") {
+    return "Linked record lookup timed out. Please try again.";
+  }
+  if (kind === "config_missing") {
+    return "Linked records are not configured. Add AIRTABLE_PAT and AIRTABLE_BASE_ID.";
+  }
+  if (kind === "access_denied") {
+    return "Airtable access was denied. Check Airtable PAT permissions.";
+  }
+  if (kind === "schema_drift") {
+    return "Linked record mapping is out of sync. Run admin sync and try again.";
+  }
+  return "Unable to load linked records right now. Please try again.";
 }
 
 function normalizeErrorMessage(err: unknown) {
@@ -148,7 +240,7 @@ function normalizeErrorMessage(err: unknown) {
 
 function mapAirtableRecords(
   records: Array<{ id: string; fields: Record<string, unknown> }>,
-  config: LinkedRecordConfig,
+  config: EffectiveLookupConfig,
   query: string
 ): CachedLinkedRecord[] {
   const normalizedQuery = query.toLowerCase();
@@ -156,11 +248,15 @@ function mapAirtableRecords(
 
   return records
     .map((record): CachedLinkedRecord => {
-      const name = pickDisplayName(record.fields, config.displayField);
+      const fields =
+        record && record.fields && typeof record.fields === "object"
+          ? record.fields
+          : {};
+      const name = pickDisplayName(fields, config.displayField);
       const metadata: Record<string, string> = {};
 
       for (const fieldName of previewFields) {
-        const value = coerceFieldValue(record.fields[fieldName]).trim();
+        const value = coerceFieldValue(fields[fieldName]).trim();
         if (value) metadata[fieldName] = value;
       }
 
@@ -247,15 +343,67 @@ async function resolveLinkedRecordConfig(
   return resolved;
 }
 
+function buildCandidateConfigs(
+  fieldName: LinkedRecordFieldName,
+  config: LinkedRecordConfig
+): EffectiveLookupConfig[] {
+  const tableCandidates = uniqueStrings([
+    config.table,
+    ...(TABLE_NAME_FALLBACKS[fieldName] ?? []),
+  ]);
+  const displayCandidates = uniqueStrings([
+    config.displayField,
+    ...(DISPLAY_FIELD_FALLBACKS[fieldName] ?? []),
+  ]);
+  const previewCandidates = uniqueStrings([
+    ...(config.previewFields ?? []),
+    ...(PREVIEW_FIELD_FALLBACKS[fieldName] ?? []),
+  ]);
+
+  const candidates: EffectiveLookupConfig[] = [];
+  const seen = new Set<string>();
+
+  function push(table: string, displayField: string, sortField?: string) {
+    const previewFields = previewCandidates.filter((field) => field !== displayField);
+    const key = `${table}|${displayField}|${sortField ?? ""}|${previewFields.join(",")}`;
+    if (!table || !displayField || seen.has(key)) return;
+    seen.add(key);
+    candidates.push({
+      table,
+      displayField,
+      previewFields,
+      sortField,
+      sortDirection: config.sortDirection ?? "asc",
+    });
+  }
+
+  push(config.table, config.displayField, config.sortField);
+
+  for (const displayField of displayCandidates) {
+    push(config.table, displayField, displayField);
+  }
+
+  const fallbackDisplay = displayCandidates[0] ?? config.displayField;
+  for (const table of tableCandidates.slice(1)) {
+    push(table, fallbackDisplay, fallbackDisplay);
+    if (displayCandidates[1]) {
+      push(table, displayCandidates[1], displayCandidates[1]);
+    }
+  }
+
+  return candidates;
+}
+
 async function listWithFallbacks(
+  fieldName: LinkedRecordFieldName,
   config: LinkedRecordConfig,
   query: string
-): Promise<Array<{ id: string; fields: Record<string, unknown> }>> {
+): Promise<{
+  records: Array<{ id: string; fields: Record<string, unknown> }>;
+  effectiveConfig: EffectiveLookupConfig;
+}> {
   const safeQuery = sanitizeQuery(query);
-  const allFields = [
-    config.displayField,
-    ...(config.previewFields ?? []),
-  ].filter(Boolean);
+  const candidateConfigs = buildCandidateConfigs(fieldName, config);
 
   const attempts: Array<{
     includeSort: boolean;
@@ -284,33 +432,41 @@ async function listWithFallbacks(
 
   let lastError: Error | null = null;
 
-  for (const attempt of attempts) {
-    const sort = attempt.includeSort && config.sortField
-      ? {
-        field: config.sortField,
-        direction: config.sortDirection ?? "asc",
-      }
-      : undefined;
+  for (const candidate of candidateConfigs) {
+    const allFields = uniqueStrings([
+      candidate.displayField,
+      ...candidate.previewFields,
+    ]);
 
-    const filterFormula = attempt.includeFilter
-      ? buildFilterFormula(safeQuery, config.displayField)
-      : undefined;
+    for (const attempt of attempts) {
+      const sort = attempt.includeSort
+        ? {
+          field: candidate.sortField ?? candidate.displayField,
+          direction: candidate.sortDirection ?? "asc",
+        }
+        : undefined;
 
-    const fields = attempt.includeFields ? allFields : undefined;
+      const filterFormula = attempt.includeFilter
+        ? buildFilterFormula(safeQuery, candidate.displayField)
+        : undefined;
 
-    try {
-      return await listRecords(config.table, {
-        fields,
-        maxRecords: 100,
-        filterFormula,
-        sort,
-      });
-    } catch (err) {
-      const message = normalizeErrorMessage(err);
-      lastError = err instanceof Error ? err : new Error(message);
+      const fields = attempt.includeFields ? allFields : undefined;
 
-      if (!isRecoverableAirtableSchemaError(message)) {
-        throw lastError;
+      try {
+        const records = await listRecords(candidate.table, {
+          fields,
+          maxRecords: 100,
+          filterFormula,
+          sort,
+        });
+        return { records, effectiveConfig: candidate };
+      } catch (err) {
+        const message = normalizeErrorMessage(err);
+        lastError = err instanceof Error ? err : new Error(message);
+
+        if (!isRecoverableAirtableLookupError(message)) {
+          throw lastError;
+        }
       }
     }
   }
@@ -319,7 +475,7 @@ async function listWithFallbacks(
 }
 
 export function isLinkedRecordFieldName(value: string): value is LinkedRecordFieldName {
-  return Object.prototype.hasOwnProperty.call(LINKED_RECORD_FIELDS, value);
+  return (LINKED_LOOKUP_FIELD_NAMES as readonly string[]).includes(value);
 }
 
 export async function searchLinkedRecordsForField(
@@ -379,11 +535,18 @@ export async function searchLinkedRecordsForField(
     }
 
     const records = await runLinkedSearchWithInflight(cacheKey, async () => {
-      const rawRecords = await listWithFallbacks(config, sanitizedQuery);
-      return mapAirtableRecords(rawRecords, config, sanitizedQuery);
+      const { records: rawRecords, effectiveConfig } = await listWithFallbacks(
+        fieldName,
+        config,
+        sanitizedQuery
+      );
+      return mapAirtableRecords(rawRecords, effectiveConfig, sanitizedQuery);
     });
 
     await setLinkedSearchCache(cacheKey, sanitizedQuery, records);
+    if (!sanitizedQuery && records.length > 0) {
+      await setLinkedSearchFieldSnapshot(fieldName, records);
+    }
 
     if (sample) {
       trackTelemetry("linked_search.success", {
@@ -399,30 +562,34 @@ export async function searchLinkedRecordsForField(
     return { records };
   } catch (err) {
     const message = normalizeErrorMessage(err);
-    if (sample) {
-      trackTelemetry(
-        "linked_search.error",
-        {
-          ip,
-          fieldName,
-          table: config.table,
-          message,
-          durationMs: now() - startedAt,
-        },
-        "error"
-      );
+    trackTelemetry(
+      "linked_search.error",
+      {
+        ip,
+        fieldName,
+        table: config.table,
+        message,
+        durationMs: now() - startedAt,
+      },
+      "error"
+    );
+
+    const snapshot = await getLinkedSearchFieldSnapshot(fieldName);
+    if (snapshot && snapshot.length > 0) {
+      const filtered = sanitizedQuery
+        ? snapshot.filter((record) =>
+          record.name.toLowerCase().includes(sanitizedQuery.toLowerCase())
+        )
+        : snapshot;
+      if (filtered.length > 0) {
+        return { records: filtered };
+      }
     }
 
-    if (/timed out/i.test(message)) {
-      return {
-        records: [],
-        error: "Linked record lookup timed out. Please try again.",
-      };
-    }
-
+    const kind = classifyLookupFailure(message);
     return {
       records: [],
-      error: "Unable to load linked records right now. Please try again.",
+      error: userFacingLookupError(kind),
     };
   }
 }

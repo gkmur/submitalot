@@ -25,8 +25,16 @@ declare global {
 }
 
 const CACHE_PREFIX = "submitalot:linked-search:v1:";
+const FIELD_SNAPSHOT_PREFIX = "submitalot:linked-search:field:v1:";
 const DEFAULT_TTL_MS = envInt(process.env.LINKED_SEARCH_CACHE_TTL_MS, 45_000);
-const EMPTY_QUERY_TTL_MS = envInt(process.env.LINKED_SEARCH_EMPTY_CACHE_TTL_MS, 120_000);
+const EMPTY_QUERY_TTL_MS = envInt(
+  process.env.LINKED_SEARCH_EMPTY_CACHE_TTL_MS,
+  30 * 60 * 1000
+);
+const FIELD_SNAPSHOT_TTL_MS = envInt(
+  process.env.LINKED_SEARCH_FIELD_SNAPSHOT_TTL_MS,
+  24 * 60 * 60 * 1000
+);
 
 function envInt(value: string | undefined, fallback: number) {
   const parsed = Number(value);
@@ -71,6 +79,26 @@ export async function setLinkedSearchCache(
 ) {
   const ttlMs = normalizeQuery(query) ? DEFAULT_TTL_MS : EMPTY_QUERY_TTL_MS;
   await setJsonValue(key, records, ttlMs);
+}
+
+export async function getLinkedSearchFieldSnapshot(
+  fieldName: string
+): Promise<CachedLinkedRecord[] | null> {
+  return getJsonValue<CachedLinkedRecord[]>(
+    `${FIELD_SNAPSHOT_PREFIX}${fieldName.trim()}`
+  );
+}
+
+export async function setLinkedSearchFieldSnapshot(
+  fieldName: string,
+  records: CachedLinkedRecord[]
+) {
+  if (!fieldName.trim()) return;
+  await setJsonValue(
+    `${FIELD_SNAPSHOT_PREFIX}${fieldName.trim()}`,
+    records,
+    FIELD_SNAPSHOT_TTL_MS
+  );
 }
 
 export async function runLinkedSearchWithInflight(

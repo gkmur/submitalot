@@ -18,6 +18,13 @@ function now() {
   return Date.now();
 }
 
+function envInt(value: string | undefined, fallback: number) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
+}
+
+const REDIS_OP_TIMEOUT_MS = envInt(process.env.REDIS_OP_TIMEOUT_MS, 800);
+
 function getMemoryStore() {
   if (!globalThis.__submitalotMemoryStore) {
     globalThis.__submitalotMemoryStore = new Map();
@@ -70,11 +77,28 @@ function asNumber(value: unknown, fallback = 0): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+async function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race<T>([
+      promise,
+      new Promise<T>((_, reject) => {
+        timeout = setTimeout(
+          () => reject(new Error(`Redis operation timed out after ${timeoutMs}ms`)),
+          timeoutMs
+        );
+      }),
+    ]);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 export async function getJsonValue<T>(key: string): Promise<T | null> {
   const redis = getRedisClient();
   if (redis) {
     try {
-      const raw = await redis.get<string>(key);
+      const raw = await withTimeout(redis.get<string>(key), REDIS_OP_TIMEOUT_MS);
       if (!raw) return null;
       return JSON.parse(raw) as T;
     } catch {
@@ -98,7 +122,10 @@ export async function setJsonValue(key: string, value: unknown, ttlMs: number) {
   const redis = getRedisClient();
   if (redis) {
     try {
-      await redis.set(key, serialized, { px: ttlMs });
+      await withTimeout(
+        redis.set(key, serialized, { px: ttlMs }),
+        REDIS_OP_TIMEOUT_MS
+      );
       return;
     } catch {
       globalThis.__submitalotRedisClient = null;
@@ -115,16 +142,22 @@ export async function incrementWindowCounter(
   const redis = getRedisClient();
   if (redis) {
     try {
-      const count = asNumber(await redis.incr(key), 0);
+      const count = asNumber(
+        await withTimeout(redis.incr(key), REDIS_OP_TIMEOUT_MS),
+        0
+      );
 
       if (count === 1) {
-        await redis.pexpire(key, windowMs);
+        await withTimeout(redis.pexpire(key, windowMs), REDIS_OP_TIMEOUT_MS);
         return { count, retryAfterMs: windowMs };
       }
 
-      let ttl = asNumber(await redis.pttl(key), windowMs);
+      let ttl = asNumber(
+        await withTimeout(redis.pttl(key), REDIS_OP_TIMEOUT_MS),
+        windowMs
+      );
       if (ttl < 0) {
-        await redis.pexpire(key, windowMs);
+        await withTimeout(redis.pexpire(key, windowMs), REDIS_OP_TIMEOUT_MS);
         ttl = windowMs;
       }
 
