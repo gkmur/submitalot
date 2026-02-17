@@ -4,9 +4,12 @@ import { FormSection } from "../FormSection";
 import { SearchableMultiSelect } from "../fields/SearchableMultiSelect";
 import { SelectDropdown } from "../fields/SelectDropdown";
 import { TextInput } from "../fields/TextInput";
-import { COUNTRY_OPTIONS, US_STATE_OPTIONS } from "@/lib/constants/options";
+import { useRuntimeOptions } from "../useRuntimeOptions";
+import { US_STATE_OPTIONS } from "@/lib/constants/options";
 
 export function LocationSection() {
+  const { COUNTRY_OPTIONS } = useRuntimeOptions();
+
   return (
     <FormSection title="Location">
       <SearchableMultiSelect

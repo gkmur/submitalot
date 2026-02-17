@@ -8,7 +8,7 @@ export async function GET(
   context: { params: Promise<{ id: string }> }
 ) {
   const { id } = await context.params;
-  const stored = loadUpload(id);
+  const stored = await loadUpload(id);
   if (!stored) {
     return NextResponse.json({ error: "Upload not found" }, { status: 404 });
   }

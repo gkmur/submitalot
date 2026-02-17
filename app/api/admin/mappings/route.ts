@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { fetchBaseSchema } from "@/lib/airtable-meta";
-import {
-  analyzeMappings,
-  applyMappingUpdates,
-  getInventoryTable,
-  readCurrentFieldMap,
-} from "@/lib/admin-sync";
+import { analyzeMappings, getInventoryTable } from "@/lib/admin-sync";
 import type { FormFieldKey } from "@/lib/admin-sync";
+import { requireAdminAccess } from "@/lib/admin-auth";
+import { getEffectiveFieldMap, applyRuntimeMappingUpdates } from "@/lib/runtime-admin-config";
+import { maybeRunAutoSchemaSync } from "@/lib/schema-sync-service";
 
 interface MappingUpdateRequestBody {
   updates?: Partial<Record<FormFieldKey, string>>;
@@ -26,13 +24,6 @@ const READ_ONLY_FIELD_TYPES = new Set([
   "lastModifiedTime",
   "autoNumber",
 ]);
-
-function ensureAvailable() {
-  if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ error: "Not available" }, { status: 404 });
-  }
-  return null;
-}
 
 function isWritableFieldType(type: string) {
   return !READ_ONLY_FIELD_TYPES.has(type);
@@ -55,18 +46,19 @@ function parseRequestBody(raw: unknown): MappingUpdateRequestBody {
   return parsed;
 }
 
-export async function GET() {
-  const unavailable = ensureAvailable();
-  if (unavailable) return unavailable;
+export async function GET(request: Request) {
+  const unauthorized = requireAdminAccess(request);
+  if (unauthorized) return unauthorized;
 
   try {
+    void maybeRunAutoSchemaSync();
     const schema = await fetchBaseSchema();
     const inventoryTable = getInventoryTable(schema);
     if (!inventoryTable) {
       return NextResponse.json({ error: "Inventory table not found in base" }, { status: 404 });
     }
 
-    const currentMap = readCurrentFieldMap();
+    const currentMap = await getEffectiveFieldMap();
     const analysis = analyzeMappings(inventoryTable, currentMap);
 
     return NextResponse.json({
@@ -91,8 +83,8 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
-  const unavailable = ensureAvailable();
-  if (unavailable) return unavailable;
+  const unauthorized = requireAdminAccess(request);
+  if (unauthorized) return unauthorized;
 
   try {
     const rawBody = await request.json().catch(() => ({}));
@@ -104,7 +96,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Inventory table not found in base" }, { status: 404 });
     }
 
-    const currentMap = readCurrentFieldMap();
+    const currentMap = await getEffectiveFieldMap();
     const currentAnalysis = analyzeMappings(inventoryTable, currentMap);
     const fieldByName = new Map(inventoryTable.fields.map((field) => [field.name, field]));
 
@@ -153,12 +145,12 @@ export async function PUT(request: Request) {
       }
     }
 
-    const writeResult = applyMappingUpdates(updates);
+    const writeResult = await applyRuntimeMappingUpdates(updates);
     const nextAnalysis = analyzeMappings(inventoryTable, writeResult.nextMap);
 
     return NextResponse.json({
       success: true,
-      backupPath: writeResult.backupPath,
+      backupPath: null,
       changedCount: writeResult.changedCount,
       currentMap: writeResult.nextMap,
       rows: nextAnalysis.rows,
@@ -170,4 +162,3 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-

@@ -143,7 +143,7 @@ export function SearchableMultiSelect({
   const activeDescendant = activeIndex >= 0 ? `${name}-opt-${activeIndex}` : undefined;
 
   return (
-    <div className="field-group">
+    <div className="field-group" data-field-name={name}>
       <span className="field-label">
         {label}
         {required && <span className="required">*</span>}
@@ -201,6 +201,8 @@ export function SearchableMultiSelect({
           </svg>
           <input
             ref={inputRef}
+            id={name}
+            name={name}
             type="text"
             className="sms-input"
             role="combobox"

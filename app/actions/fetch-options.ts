@@ -6,6 +6,7 @@ import { LINKED_RECORD_FIELDS } from "@/lib/linked-records";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request";
 import { shouldSample, trackTelemetry } from "@/lib/telemetry";
+import { maybeRunAutoSchemaSync } from "@/lib/schema-sync-service";
 import {
   getLinkedSearchCache,
   makeLinkedSearchCacheKey,
@@ -34,6 +35,7 @@ export async function searchLinkedRecords(
 ): Promise<LinkedRecordSearchResult> {
   const startedAt = Date.now();
   const sample = shouldSample();
+  void maybeRunAutoSchemaSync();
   const requestHeaders = await headers();
   const ip = getClientIp(requestHeaders);
 

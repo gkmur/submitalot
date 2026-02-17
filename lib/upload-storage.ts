@@ -9,6 +9,11 @@ import {
 } from "fs";
 import { join } from "path";
 import { randomUUID } from "crypto";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 
 export interface StoredUploadMeta {
   id: string;
@@ -19,7 +24,7 @@ export interface StoredUploadMeta {
 }
 
 const UPLOAD_ROOT = join(process.cwd(), "tmp", "uploads");
-const STORAGE_DRIVER = process.env.UPLOAD_STORAGE_DRIVER ?? "local";
+const STORAGE_DRIVER = (process.env.UPLOAD_STORAGE_DRIVER ?? "local").toLowerCase();
 const RETENTION_HOURS = envInt(process.env.UPLOAD_RETENTION_HOURS, 72);
 const RETENTION_MS = RETENTION_HOURS * 60 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = envInt(process.env.UPLOAD_CLEANUP_INTERVAL_MS, 10 * 60 * 1000);
@@ -27,6 +32,18 @@ const CLEANUP_INTERVAL_MS = envInt(process.env.UPLOAD_CLEANUP_INTERVAL_MS, 10 * 
 declare global {
   // eslint-disable-next-line no-var
   var __submitalotUploadCleanupAfter: number | undefined;
+  // eslint-disable-next-line no-var
+  var __submitalotS3Client: S3Client | undefined;
+}
+
+interface S3UploadConfig {
+  bucket: string;
+  region: string;
+  endpoint?: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  forcePathStyle: boolean;
+  prefix: string;
 }
 
 function envInt(value: string | undefined, fallback: number) {
@@ -34,8 +51,8 @@ function envInt(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
-function assertStorageDriver() {
-  if (STORAGE_DRIVER !== "local") {
+function ensureStorageDriver() {
+  if (STORAGE_DRIVER !== "local" && STORAGE_DRIVER !== "s3") {
     throw new Error(`Unsupported UPLOAD_STORAGE_DRIVER: ${STORAGE_DRIVER}`);
   }
 }
@@ -79,8 +96,110 @@ export function isTrustedUploadUrl(urlValue: string, expectedOrigin: string) {
   }
 }
 
-export async function persistUpload(file: File): Promise<StoredUploadMeta> {
-  assertStorageDriver();
+function getS3Config(): S3UploadConfig {
+  const bucket = process.env.S3_BUCKET?.trim() ?? "";
+  const region = process.env.S3_REGION?.trim() || "auto";
+  const endpoint = process.env.S3_ENDPOINT?.trim() || undefined;
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID?.trim() ?? "";
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY?.trim() ?? "";
+  const forcePathStyle = process.env.S3_FORCE_PATH_STYLE === "true";
+  const prefix = (process.env.S3_UPLOAD_PREFIX ?? "uploads").replace(/^\/+|\/+$/g, "");
+
+  if (!bucket) throw new Error("S3_BUCKET is required when UPLOAD_STORAGE_DRIVER=s3");
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error("S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY are required for s3 upload storage");
+  }
+
+  return {
+    bucket,
+    region,
+    endpoint,
+    accessKeyId,
+    secretAccessKey,
+    forcePathStyle,
+    prefix: prefix || "uploads",
+  };
+}
+
+function getS3Client() {
+  if (globalThis.__submitalotS3Client) {
+    return globalThis.__submitalotS3Client;
+  }
+
+  const config = getS3Config();
+  globalThis.__submitalotS3Client = new S3Client({
+    region: config.region,
+    endpoint: config.endpoint,
+    forcePathStyle: config.forcePathStyle,
+    credentials: {
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+    },
+  });
+  return globalThis.__submitalotS3Client;
+}
+
+function s3ObjectKey(id: string) {
+  const config = getS3Config();
+  return `${config.prefix}/${id}.bin`;
+}
+
+function encodeMetaValue(value: string) {
+  return encodeURIComponent(value);
+}
+
+function decodeMetaValue(value: string | undefined, fallback: string) {
+  if (!value) return fallback;
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return fallback;
+  }
+}
+
+function isS3NotFoundError(err: unknown) {
+  if (!err || typeof err !== "object") return false;
+  const maybe = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+  if (maybe.name === "NoSuchKey" || maybe.name === "NotFound") return true;
+  return maybe.$metadata?.httpStatusCode === 404;
+}
+
+async function bodyToBuffer(
+  body: unknown
+): Promise<Buffer> {
+  if (!body) return Buffer.alloc(0);
+  if (Buffer.isBuffer(body)) return body;
+  if (body instanceof Uint8Array) return Buffer.from(body);
+
+  const withTransform = body as { transformToByteArray?: () => Promise<Uint8Array> };
+  if (typeof withTransform.transformToByteArray === "function") {
+    const bytes = await withTransform.transformToByteArray();
+    return Buffer.from(bytes);
+  }
+
+  const iterable = body as AsyncIterable<unknown>;
+  if (Symbol.asyncIterator in (body as object)) {
+    const chunks: Buffer[] = [];
+    for await (const chunk of iterable) {
+      if (Buffer.isBuffer(chunk)) {
+        chunks.push(chunk);
+        continue;
+      }
+      if (chunk instanceof Uint8Array) {
+        chunks.push(Buffer.from(chunk));
+        continue;
+      }
+      if (typeof chunk === "string") {
+        chunks.push(Buffer.from(chunk));
+      }
+    }
+    return Buffer.concat(chunks);
+  }
+
+  throw new Error("Unsupported S3 body stream type");
+}
+
+async function persistUploadLocal(file: File): Promise<StoredUploadMeta> {
   maybeCleanupExpiredUploads();
   ensureUploadRoot();
 
@@ -101,8 +220,46 @@ export async function persistUpload(file: File): Promise<StoredUploadMeta> {
   return meta;
 }
 
-export function loadUpload(id: string): { buffer: Buffer; meta: StoredUploadMeta } | null {
-  assertStorageDriver();
+async function persistUploadS3(file: File): Promise<StoredUploadMeta> {
+  const id = randomUUID();
+  const meta: StoredUploadMeta = {
+    id,
+    originalName: file.name,
+    type: file.type || "application/octet-stream",
+    size: file.size,
+    storedAt: new Date().toISOString(),
+  };
+  const key = s3ObjectKey(id);
+  const config = getS3Config();
+  const client = getS3Client();
+  const body = Buffer.from(await file.arrayBuffer());
+
+  await client.send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: key,
+      Body: body,
+      ContentType: meta.type,
+      Metadata: {
+        originalname: encodeMetaValue(meta.originalName),
+        storedat: meta.storedAt,
+        originaltype: meta.type,
+      },
+    })
+  );
+
+  return meta;
+}
+
+export async function persistUpload(file: File): Promise<StoredUploadMeta> {
+  ensureStorageDriver();
+  if (STORAGE_DRIVER === "s3") {
+    return persistUploadS3(file);
+  }
+  return persistUploadLocal(file);
+}
+
+function loadUploadLocal(id: string): { buffer: Buffer; meta: StoredUploadMeta } | null {
   maybeCleanupExpiredUploads();
   if (!isValidUploadId(id)) return null;
 
@@ -118,7 +275,54 @@ export function loadUpload(id: string): { buffer: Buffer; meta: StoredUploadMeta
   }
 }
 
+async function loadUploadS3(id: string): Promise<{ buffer: Buffer; meta: StoredUploadMeta } | null> {
+  if (!isValidUploadId(id)) return null;
+
+  const config = getS3Config();
+  const client = getS3Client();
+  const key = s3ObjectKey(id);
+
+  try {
+    const result = await client.send(
+      new GetObjectCommand({
+        Bucket: config.bucket,
+        Key: key,
+      })
+    );
+
+    const buffer = await bodyToBuffer(result.Body);
+    const originalName = decodeMetaValue(result.Metadata?.originalname, "upload.bin");
+    const type = result.ContentType || result.Metadata?.originaltype || "application/octet-stream";
+    const storedAt = result.Metadata?.storedat || new Date().toISOString();
+    const size = typeof result.ContentLength === "number" ? result.ContentLength : buffer.length;
+
+    return {
+      buffer,
+      meta: {
+        id,
+        originalName,
+        type,
+        size,
+        storedAt,
+      },
+    };
+  } catch (err) {
+    if (isS3NotFoundError(err)) return null;
+    throw err;
+  }
+}
+
+export async function loadUpload(id: string): Promise<{ buffer: Buffer; meta: StoredUploadMeta } | null> {
+  ensureStorageDriver();
+  if (STORAGE_DRIVER === "s3") {
+    return loadUploadS3(id);
+  }
+  return loadUploadLocal(id);
+}
+
 function maybeCleanupExpiredUploads() {
+  if (STORAGE_DRIVER !== "local") return;
+
   const current = Date.now();
   if (
     globalThis.__submitalotUploadCleanupAfter &&

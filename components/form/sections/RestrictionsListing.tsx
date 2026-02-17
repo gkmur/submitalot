@@ -8,7 +8,8 @@ import { TextArea } from "../fields/TextArea";
 import { Checkbox } from "../fields/Checkbox";
 import { LinkedRecordPicker } from "../fields/LinkedRecordPicker";
 import { SearchableMultiSelect } from "../fields/SearchableMultiSelect";
-import { LISTING_DISAGGREGATION_OPTIONS, BUYER_TYPE_OPTIONS, COUNTRY_OPTIONS } from "@/lib/constants/options";
+import { useRuntimeOptions } from "../useRuntimeOptions";
+import { LISTING_DISAGGREGATION_OPTIONS } from "@/lib/constants/options";
 import { LINKED_RECORD_FIELDS } from "@/lib/linked-records";
 import { shouldShowField, getFieldsToClear } from "@/lib/conditional-logic";
 import type { ItemizationFormData, LinkedRecord } from "@/lib/types";
@@ -22,6 +23,7 @@ interface RestrictionsListingProps {
 export function RestrictionsListing({ onRecordsChange, initialRecords, loadGeneration }: RestrictionsListingProps = {}) {
   const { watch, resetField } = useFormContext<ItemizationFormData>();
   const listingDisaggregation = watch("listingDisaggregation");
+  const { BUYER_TYPE_OPTIONS, COUNTRY_OPTIONS } = useRuntimeOptions();
 
   function handleDisaggregationChange(value: string) {
     const toClear = getFieldsToClear("listingDisaggregation", value);

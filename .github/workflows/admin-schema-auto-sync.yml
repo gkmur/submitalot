@@ -1,0 +1,32 @@
+name: Admin Schema Auto Sync
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  auto-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger production sync endpoint
+        env:
+          BASE_URL: ${{ secrets.SUBMITALOT_BASE_URL }}
+          CRON_SECRET: ${{ secrets.ADMIN_SYNC_CRON_SECRET }}
+          ADMIN_USER: ${{ secrets.ADMIN_BASIC_AUTH_USERNAME }}
+          ADMIN_PASS: ${{ secrets.ADMIN_BASIC_AUTH_PASSWORD }}
+        run: |
+          if [ -z "$BASE_URL" ] || [ -z "$CRON_SECRET" ]; then
+            echo "Required secrets are missing (SUBMITALOT_BASE_URL and/or ADMIN_SYNC_CRON_SECRET). Skipping."
+            exit 0
+          fi
+
+          endpoint="${BASE_URL%/}/api/admin/sync/auto"
+          cmd=(curl -fsS -X POST "$endpoint" -H "x-cron-secret: $CRON_SECRET")
+
+          if [ -n "$ADMIN_USER" ] && [ -n "$ADMIN_PASS" ]; then
+            cmd+=(-u "${ADMIN_USER}:${ADMIN_PASS}")
+          fi
+
+          "${cmd[@]}"

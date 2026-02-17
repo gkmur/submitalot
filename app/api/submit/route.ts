@@ -9,6 +9,8 @@ import { getClientIp, getRequestOrigin } from "@/lib/request";
 import { getIdempotencyEntry, hashPayload, setIdempotencyEntry } from "@/lib/idempotency";
 import { shouldSample, trackTelemetry } from "@/lib/telemetry";
 import { isTrustedUploadUrl } from "@/lib/upload-storage";
+import { getEffectiveFieldMap } from "@/lib/runtime-admin-config";
+import { maybeRunAutoSchemaSync } from "@/lib/schema-sync-service";
 
 export const runtime = "nodejs";
 
@@ -41,6 +43,7 @@ export async function POST(request: Request) {
   const startedAt = Date.now();
   const sample = shouldSample();
   const ip = getClientIp(request.headers);
+  void maybeRunAutoSchemaSync();
   const limit = await checkRateLimit(`submit:${ip}`, {
     windowMs: SUBMIT_WINDOW_MS,
     max: SUBMIT_MAX_REQUESTS,
@@ -128,8 +131,18 @@ export async function POST(request: Request) {
     }
 
     const requestOrigin = getRequestOrigin(request.headers, request.url);
-    const fields = mapToAirtableFields(parsed.data.formData, parsed.data.linkedRecords, requestOrigin);
-    const record = await createRecord("Inventory", fields);
+    const fieldMap = await getEffectiveFieldMap();
+    const fields = mapToAirtableFields(
+      parsed.data.formData,
+      parsed.data.linkedRecords,
+      fieldMap,
+      requestOrigin
+    );
+
+    const dryRun = process.env.SUBMIT_DRY_RUN === "true";
+    const record = dryRun
+      ? { id: `rec_dryrun_${Date.now()}` }
+      : await createRecord("Inventory", fields);
     const responsePayload: SubmitSuccess = { success: true, recordId: record.id };
 
     if (idempotencyKey) {
@@ -209,11 +222,12 @@ function isRecordId(value: unknown): value is string {
 function mapToAirtableFields(
   data: ItemizationSchemaType,
   linkedRecords?: LinkedRecordSelections,
+  fieldMap: Partial<Record<keyof ItemizationSchemaType, string>> = AIRTABLE_FIELD_MAP,
   uploadOrigin?: string
 ): Record<string, unknown> {
   const fields: Record<string, unknown> = {};
 
-  for (const [formKey, airtableKey] of Object.entries(AIRTABLE_FIELD_MAP)) {
+  for (const [formKey, airtableKey] of Object.entries(fieldMap)) {
     if (!airtableKey) continue;
 
     const value = data[formKey as keyof ItemizationSchemaType];

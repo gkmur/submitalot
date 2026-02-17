@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { fetchBaseSchema } from "@/lib/airtable-meta";
+import { requireAdminAccess } from "@/lib/admin-auth";
+import { maybeRunAutoSchemaSync } from "@/lib/schema-sync-service";
 
-export async function GET() {
-  if (process.env.NODE_ENV !== "development") {
-    return NextResponse.json({ error: "Not available" }, { status: 404 });
-  }
+export async function GET(request: Request) {
+  const unauthorized = requireAdminAccess(request);
+  if (unauthorized) return unauthorized;
 
   try {
+    void maybeRunAutoSchemaSync();
     const schema = await fetchBaseSchema();
     return NextResponse.json(schema);
   } catch (err) {

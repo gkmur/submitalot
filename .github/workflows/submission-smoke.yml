@@ -1,0 +1,60 @@
+name: Submission Smoke
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  smoke-submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      AIRTABLE_PAT: "smoke_dummy_pat"
+      AIRTABLE_BASE_ID: "appSmokeDummyBaseId"
+      PUBLIC_BASE_URL: "http://127.0.0.1:3000"
+      SUBMIT_DRY_RUN: "true"
+      ADMIN_AUTO_SYNC_ENABLED: "false"
+      UPLOAD_STORAGE_DRIVER: "local"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build app
+        run: npm run build
+
+      - name: Start app server
+        run: |
+          npm run start > /tmp/submitalot.log 2>&1 &
+          echo $! > /tmp/submitalot.pid
+
+      - name: Run smoke submission
+        env:
+          SMOKE_BASE_URL: "http://127.0.0.1:3000"
+          SMOKE_TIMEOUT_MS: "120000"
+        run: npm run smoke:submit
+
+      - name: Print server logs on failure
+        if: failure()
+        run: cat /tmp/submitalot.log
+
+      - name: Stop app server
+        if: always()
+        run: |
+          if [ -f /tmp/submitalot.pid ]; then
+            kill "$(cat /tmp/submitalot.pid)" || true
+          fi

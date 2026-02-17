@@ -25,7 +25,7 @@ export function MultiSelect({ name, label, options, required }: MultiSelectProps
   }
 
   return (
-    <div className="field-group">
+    <div className="field-group" data-field-name={name}>
       <span className="field-label">
         {label}
         {required && <span className="required">*</span>}

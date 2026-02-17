@@ -5,14 +5,16 @@ import { RadioGroup } from "../fields/RadioGroup";
 import { MultiSelect } from "../fields/MultiSelect";
 import { TextInput } from "../fields/TextInput";
 import { TextArea } from "../fields/TextArea";
+import { useRuntimeOptions } from "../useRuntimeOptions";
 import {
   CATEGORY_GROUP_OPTIONS,
   INVENTORY_EXCLUSIVITY_OPTIONS,
   PAPERWORK_OPTIONS,
-  TAG_PRESET_OPTIONS,
 } from "@/lib/constants/options";
 
 export function InventoryDetails() {
+  const { TAG_PRESET_OPTIONS } = useRuntimeOptions();
+
   return (
     <FormSection title="Inventory Details">
       <MultiSelect name="categoryGroups" label="Category Groups" options={CATEGORY_GROUP_OPTIONS} required />
