@@ -10,6 +10,27 @@ function unauthorized(realm = "submitalot") {
 
 function shouldBypassAuth(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const lowerPathname = pathname.toLowerCase();
+
+  if (pathname.startsWith("/_next/") || pathname.startsWith("/static/")) {
+    return true;
+  }
+
+  if (
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml"
+  ) {
+    return true;
+  }
+
+  if (
+    /\.(?:css|js|mjs|map|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot|otf|pdf|txt|xml|webmanifest)$/i.test(
+      lowerPathname
+    )
+  ) {
+    return true;
+  }
 
   if (pathname.startsWith("/api/upload/") && (request.method === "GET" || request.method === "HEAD")) {
     return true;
