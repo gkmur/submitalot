@@ -179,7 +179,7 @@ export function LinkedRecordPicker({
   const isSelected = (id: string) => selectedRecords.some((s) => s.id === id);
 
   return (
-    <div className="field-group" ref={containerRef}>
+    <div className="field-group" ref={containerRef} data-field-name={name}>
       <label className="field-label">
         {label}
         {required && <span className="required">*</span>}
@@ -199,6 +199,8 @@ export function LinkedRecordPicker({
 
       <div className="picker-wrapper">
         <input
+          id={name}
+          name={name}
           type="text"
           className="input"
           value={query}

@@ -1,14 +1,15 @@
 "use client";
 
-import { useForm, FormProvider, type Resolver } from "react-hook-form";
+import { useForm, FormProvider, type Resolver, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useCallback, useRef, useEffect, type ReactNode } from "react";
 import { itemizationSchema } from "@/lib/schema";
 import { FORM_DEFAULTS, SECTION_FIELD_MAP } from "@/lib/constants/form";
 import type { ItemizationFormData, FormFieldName, SectionId, LinkedRecord } from "@/lib/types";
-import { saveHistory, saveTemplate, buildCarryForwardValues, isStorageAvailable, type StoredSubmission, type LinkedRecordFieldName, type HistoryEntry, type Template } from "@/lib/storage";
+import { saveHistory, saveTemplate, buildCarryForwardValues, isStorageAvailable, getDraft, saveDraft, clearDraft, type DraftEntry, type StoredSubmission, type LinkedRecordFieldName, type HistoryEntry, type Template } from "@/lib/storage";
 import { scrubOrphanedFields } from "@/lib/conditional-logic";
 import { SubmitRequestError, submitWithRetry } from "@/lib/client-submit";
+import { focusFieldByName } from "@/lib/focus-field";
 import { HistoryDrawer } from "./HistoryDrawer";
 
 import { FormStepper, type SectionDef } from "./FormStepper";
@@ -31,6 +32,29 @@ const SECTION_DEFS: (SectionDef & { id: SectionId })[] = [
   { id: "pricing", title: "Pricing", requiredFields: ["currencyType", "inlandFreight", "marginTakeRate", "priceColumns", "maxPercentOffAsking"] as FormFieldName[] },
   { id: "restrictions", title: "Restrictions & Listing", requiredFields: ["listingDisaggregation"] as FormFieldName[] },
 ];
+
+function hasMeaningfulDraft(draft: DraftEntry) {
+  const formValues = Object.values(draft.data.formData);
+  for (const value of formValues) {
+    if (value === undefined || value === null) continue;
+    if (typeof value === "string" && value.trim() === "") continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    if (typeof value === "boolean" && value === false) continue;
+    if (typeof value === "number" && !Number.isFinite(value)) continue;
+    return true;
+  }
+
+  const linkedValues = Object.values(draft.data.linkedRecords);
+  return linkedValues.some((records) => Array.isArray(records) && records.length > 0);
+}
+
+function relativeTimeLabel(timestamp: number) {
+  const diff = Date.now() - timestamp;
+  if (diff < 5_000) return "just now";
+  if (diff < 60_000) return `${Math.max(1, Math.floor(diff / 1000))}s ago`;
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  return `${Math.floor(diff / 3_600_000)}h ago`;
+}
 
 function getSectionPreview(
   sectionId: SectionId,
@@ -72,10 +96,22 @@ export function ItemizationForm() {
   const [loadGeneration, setLoadGeneration] = useState(0);
   const [lastSubmitted, setLastSubmitted] = useState<StoredSubmission | null>(null);
   const [keptSections, setKeptSections] = useState<Set<SectionId>>(new Set(SECTION_DEFS.map((s) => s.id)));
+  const [pendingDraft, setPendingDraft] = useState<DraftEntry | null>(null);
+  const [lastDraftSavedAt, setLastDraftSavedAt] = useState<number | null>(null);
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [storageOk, setStorageOk] = useState(false);
-  useEffect(() => { setStorageOk(isStorageAvailable()); }, []);
+  useEffect(() => {
+    const available = isStorageAvailable();
+    setStorageOk(available);
+    if (!available) return;
+
+    const draft = getDraft();
+    if (draft && hasMeaningfulDraft(draft)) {
+      setPendingDraft(draft);
+      setLastDraftSavedAt(draft.updatedAt);
+    }
+  }, []);
 
   const linkedRecordsRef = useRef<Partial<Record<LinkedRecordFieldName, LinkedRecord[]>>>({});
   const idempotencyKeyRef = useRef<string | null>(null);
@@ -86,6 +122,7 @@ export function ItemizationForm() {
     mode: "onBlur",
     shouldUnregister: false,
   });
+  const watchedValues = useWatch({ control: methods.control });
 
   const goTo = useCallback(
     (index: number) => {
@@ -95,12 +132,22 @@ export function ItemizationForm() {
     [currentSection]
   );
 
-  const next = useCallback(() => {
+  const next = useCallback(async () => {
     if (currentSection < SECTION_DEFS.length - 1) {
+      const sectionId = SECTION_DEFS[currentSection].id;
+      const sectionFields = [...SECTION_FIELD_MAP[sectionId]] as FormFieldName[];
+      const valid = await methods.trigger(sectionFields, { shouldFocus: true });
+      if (!valid) {
+        const firstInvalid = sectionFields.find((field) => methods.getFieldState(field).invalid);
+        if (firstInvalid) {
+          focusFieldByName(firstInvalid);
+        }
+        return;
+      }
       setDirection("forward");
       setCurrentSection((s) => s + 1);
     }
-  }, [currentSection]);
+  }, [currentSection, methods]);
 
   const prev = useCallback(() => {
     if (currentSection > 0) {
@@ -110,8 +157,46 @@ export function ItemizationForm() {
   }, [currentSection]);
 
   function handleRecordsChange(field: string, records: LinkedRecord[]) {
-    linkedRecordsRef.current = { ...linkedRecordsRef.current, [field]: records };
+    const nextRecords = { ...linkedRecordsRef.current, [field]: records };
+    linkedRecordsRef.current = nextRecords;
+    if (storageOk && !submitted) {
+      const saved = saveDraft(
+        methods.getValues(),
+        nextRecords,
+        currentSection
+      );
+      if (saved) {
+        setLastDraftSavedAt(Date.now());
+        setPendingDraft(null);
+      }
+    }
   }
+
+  useEffect(() => {
+    if (!storageOk || submitted) return;
+    if (!methods.formState.isDirty) return;
+
+    const timer = setTimeout(() => {
+      const saved = saveDraft(
+        methods.getValues(),
+        linkedRecordsRef.current,
+        currentSection
+      );
+      if (saved) {
+        setLastDraftSavedAt(Date.now());
+        setPendingDraft(null);
+      }
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [
+    watchedValues,
+    currentSection,
+    storageOk,
+    submitted,
+    methods,
+    methods.formState.isDirty,
+  ]);
 
   async function onSubmit(data: ItemizationFormData) {
     setSubmitting(true);
@@ -139,6 +224,9 @@ export function ItemizationForm() {
       setLastSubmitted(stored);
       setKeptSections(new Set(SECTION_DEFS.map((s) => s.id)));
       setSubmitted(true);
+      clearDraft();
+      setLastDraftSavedAt(null);
+      setPendingDraft(null);
       idempotencyKeyRef.current = null;
     } catch (err) {
       if (
@@ -173,6 +261,7 @@ export function ItemizationForm() {
     setLoadGeneration((g) => g + 1);
     setCurrentSection(0);
     setSubmitted(false);
+    setPendingDraft(null);
     idempotencyKeyRef.current = null;
   }
 
@@ -182,6 +271,9 @@ export function ItemizationForm() {
     setLoadGeneration((g) => g + 1);
     setCurrentSection(0);
     setSubmitted(false);
+    clearDraft();
+    setLastDraftSavedAt(null);
+    setPendingDraft(null);
     idempotencyKeyRef.current = null;
   }
 
@@ -192,6 +284,7 @@ export function ItemizationForm() {
     methods.reset(scrubbed as ItemizationFormData);
     setLoadGeneration((g) => g + 1);
     setCurrentSection(0);
+    setPendingDraft(null);
     idempotencyKeyRef.current = null;
   }
 
@@ -297,6 +390,61 @@ export function ItemizationForm() {
 
         <div className="form-content">
           <form onSubmit={methods.handleSubmit(onSubmit)} noValidate>
+            {pendingDraft && (
+              <div className="draft-restore-banner">
+                <div className="draft-restore-copy">
+                  <strong>Saved draft found</strong>
+                  <span>Last saved {relativeTimeLabel(pendingDraft.updatedAt)}</span>
+                </div>
+                <div className="draft-restore-actions">
+                  <button
+                    type="button"
+                    className="draft-restore-btn draft-restore-btn--primary"
+                    onClick={() => {
+                      const scrubbed = scrubOrphanedFields(
+                        pendingDraft.data.formData,
+                        pendingDraft.data.linkedRecords
+                      );
+                      linkedRecordsRef.current = pendingDraft.data.linkedRecords ?? {};
+                      methods.reset(scrubbed as ItemizationFormData);
+                      setLoadGeneration((g) => g + 1);
+                      setCurrentSection(
+                        Math.min(
+                          Math.max(0, pendingDraft.currentSection),
+                          SECTION_DEFS.length - 1
+                        )
+                      );
+                      setPendingDraft(null);
+                      setSubmitted(false);
+                      setError(null);
+                      idempotencyKeyRef.current = null;
+                    }}
+                  >
+                    Restore draft
+                  </button>
+                  <button
+                    type="button"
+                    className="draft-restore-btn"
+                    onClick={() => {
+                      clearDraft();
+                      setPendingDraft(null);
+                      setLastDraftSavedAt(null);
+                    }}
+                  >
+                    Discard
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {storageOk && !submitted && (
+              <p className="draft-status">
+                {lastDraftSavedAt
+                  ? `Draft saved ${relativeTimeLabel(lastDraftSavedAt)}`
+                  : "Draft autosave is on"}
+              </p>
+            )}
+
             {SECTION_DEFS.map((section, i) => (
               <SectionContainer
                 key={section.id}

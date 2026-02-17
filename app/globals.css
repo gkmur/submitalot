@@ -125,6 +125,44 @@ body {
   outline: none;
 }
 
+.section-error-summary {
+  border: 1px solid color-mix(in srgb, var(--error) 40%, var(--border));
+  background: color-mix(in srgb, var(--error) 8%, white);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.section-error-summary-title {
+  margin: 0 0 0.45rem;
+  color: var(--error);
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.section-error-summary-list {
+  margin: 0;
+  padding-left: 1rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.section-error-summary-list li button {
+  border: none;
+  background: none;
+  color: color-mix(in srgb, var(--error) 84%, #fff);
+  font-size: 0.78rem;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+}
+
+.section-error-summary-list li button:hover {
+  color: var(--error);
+}
+
 /* ─── Grading Details ─────────────────────────── */
 
 .grading-progress {
@@ -529,9 +567,15 @@ body {
   background: color-mix(in srgb, var(--accent) 8%, white);
 }
 
+.file-drop.uploading {
+  cursor: progress;
+  opacity: 0.85;
+}
+
 .file-drop p {
   color: var(--text-muted);
   font-size: 0.85rem;
+  margin: 0;
 }
 
 .file-list {
@@ -545,18 +589,88 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   padding: 0.4rem 0.6rem;
   background: var(--bg-elevated);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 0.82rem;
 }
 
-.file-item button {
+.file-item--uploading {
+  border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+}
+
+.file-item--failed {
+  border-color: color-mix(in srgb, var(--error) 46%, var(--border));
+}
+
+.file-item-main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.file-item-name {
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-item-meta {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.file-item-error {
+  color: var(--error);
+  font-size: 0.72rem;
+}
+
+.file-progress {
+  width: 180px;
+  max-width: 100%;
+  height: 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--border) 75%, transparent);
+  overflow: hidden;
+}
+
+.file-progress span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
+  transition: width 120ms linear;
+}
+
+.file-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.file-item-retry,
+.file-item-remove {
   background: none;
-  border: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.24rem 0.45rem;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.76rem;
+}
+
+.file-item-retry:hover,
+.file-item-remove:hover {
+  background: color-mix(in srgb, var(--bg-surface) 62%, white);
+  color: var(--text);
+}
+
+.file-item-remove {
+  font-size: 0.88rem;
+  line-height: 1;
 }
 
 /* ─── Submit ───────────────────────────────────── */
@@ -1583,6 +1697,62 @@ body {
   border-top: 1px solid var(--border);
 }
 
+.draft-restore-banner {
+  margin-bottom: 0.95rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, var(--border));
+  background: color-mix(in srgb, var(--accent) 10%, white);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.draft-restore-copy {
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.draft-restore-copy strong {
+  color: var(--text);
+  font-size: 0.84rem;
+}
+
+.draft-restore-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.draft-restore-btn {
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 0.4rem 0.58rem;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.draft-restore-btn:hover {
+  border-color: var(--accent);
+}
+
+.draft-restore-btn--primary {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 20%, white);
+  color: var(--brand-ink);
+}
+
+.draft-status {
+  margin: 0 0 0.95rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
 .nav-spacer {
   flex: 1;
 }
@@ -2115,5 +2285,16 @@ body {
     border: none;
     padding: 0.4rem 0.6rem;
     font-size: 0.72rem;
+  }
+
+  .draft-restore-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .draft-restore-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
   }
 }

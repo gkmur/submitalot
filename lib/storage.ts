@@ -25,10 +25,18 @@ export interface Template {
   data: StoredSubmission;
 }
 
+export interface DraftEntry {
+  version: 1;
+  updatedAt: number;
+  currentSection: number;
+  data: StoredSubmission;
+}
+
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const HISTORY_KEY = "submitalot:history";
 const TEMPLATES_KEY = "submitalot:templates";
+const DRAFT_KEY = "submitalot:draft";
 const MAX_HISTORY = 20;
 const MAX_TEMPLATES = 50;
 const FILE_FIELDS: FormFieldName[] = ["inventoryFile", "additionalFiles"];
@@ -96,6 +104,21 @@ function isValidTemplate(obj: unknown): obj is Template {
     "id" in obj && "name" in obj && "createdAt" in obj && "data" in obj &&
     typeof (obj as Template).data === "object" &&
     (obj as Template).data?.version === 1
+  );
+}
+
+function isValidDraft(obj: unknown): obj is DraftEntry {
+  if (typeof obj !== "object" || obj === null) return false;
+  const maybe = obj as Partial<DraftEntry>;
+  return (
+    maybe.version === 1 &&
+    typeof maybe.updatedAt === "number" &&
+    Number.isFinite(maybe.updatedAt) &&
+    typeof maybe.currentSection === "number" &&
+    Number.isInteger(maybe.currentSection) &&
+    typeof maybe.data === "object" &&
+    maybe.data !== null &&
+    maybe.data.version === 1
   );
 }
 
@@ -171,6 +194,50 @@ export function deleteTemplate(id: string): boolean {
   try {
     const templates = getTemplates().filter((t) => t.id !== id);
     localStorage.setItem(TEMPLATES_KEY, JSON.stringify(templates));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ─── Draft ────────────────────────────────────────────────────────────────────
+
+export function saveDraft(
+  data: Partial<ItemizationFormData>,
+  linkedRecords: Partial<Record<LinkedRecordFieldName, LinkedRecord[]>>,
+  currentSection: number
+): boolean {
+  if (!isStorageAvailable()) return false;
+  try {
+    const draft: DraftEntry = {
+      version: 1,
+      updatedAt: Date.now(),
+      currentSection: Math.max(0, Math.floor(currentSection)),
+      data: buildStored(data, linkedRecords),
+    };
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getDraft(): DraftEntry | null {
+  if (!isStorageAvailable()) return null;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return isValidDraft(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+export function clearDraft(): boolean {
+  if (!isStorageAvailable()) return false;
+  try {
+    localStorage.removeItem(DRAFT_KEY);
     return true;
   } catch {
     return false;
