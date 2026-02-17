@@ -62,6 +62,7 @@ export function setLinkedRecordCache(key: string, value: LinkedRecord[]) {
 }
 
 export function makeLinkedRecordCacheKey(input: {
+  fieldName?: string;
   table: string;
   displayField: string;
   query: string;
@@ -71,5 +72,8 @@ export function makeLinkedRecordCacheKey(input: {
 }) {
   const extras = (input.extraFields ?? []).slice().sort().join(",");
   const q = input.query.trim().toLowerCase();
-  return `${input.table}|${input.displayField}|${q}|${extras}|${input.sortField ?? ""}|${input.sortDirection ?? ""}`;
+  const base = input.fieldName?.trim()
+    ? `field:${input.fieldName.trim()}`
+    : `${input.table}|${input.displayField}`;
+  return `${base}|${q}|${extras}|${input.sortField ?? ""}|${input.sortDirection ?? ""}`;
 }

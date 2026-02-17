@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useFormContext } from "react-hook-form";
 import type { ItemizationFormData, FormFieldName, LinkedRecord } from "@/lib/types";
 import { HELPER_TEXT } from "@/lib/constants/form";
-import { searchLinkedRecords } from "@/app/actions/fetch-options";
 import {
   getLinkedRecordCache,
   makeLinkedRecordCacheKey,
@@ -65,6 +64,7 @@ export function LinkedRecordPicker({
     async (q: string) => {
       const gen = ++searchGenRef.current;
       const cacheKey = makeLinkedRecordCacheKey({
+        fieldName: name,
         table,
         displayField,
         query: q,
@@ -84,8 +84,7 @@ export function LinkedRecordPicker({
       setLoading(true);
       setSearchError(null);
       try {
-        const sort = sortField ? { field: sortField, direction: sortDirection ?? ("asc" as const) } : undefined;
-        const data = await searchLinkedRecords(table, displayField, q, previewFields, sort);
+        const data = await fetchLinkedRecordOptions(name, q);
         if (gen !== searchGenRef.current) return;
         setResults(data.records);
         if (data.error) {
@@ -103,7 +102,7 @@ export function LinkedRecordPicker({
         if (gen === searchGenRef.current) setLoading(false);
       }
     },
-    [table, displayField, previewFields, sortField, sortDirection]
+    [displayField, name, previewFields, sortDirection, sortField, table]
   );
 
   function handleInputChange(value: string) {
@@ -265,4 +264,37 @@ function normalizeLookupError(err: unknown) {
     return "Unable to load linked records right now. Please try again.";
   }
   return message;
+}
+
+interface LinkedLookupApiResponse {
+  records: LinkedRecord[];
+  error?: string;
+}
+
+async function fetchLinkedRecordOptions(
+  fieldName: FormFieldName,
+  query: string
+): Promise<LinkedLookupApiResponse> {
+  const params = new URLSearchParams();
+  params.set("field", fieldName);
+  params.set("query", query);
+
+  const response = await fetch(`/api/form/linked-records?${params.toString()}`, {
+    method: "GET",
+    cache: "no-store",
+    credentials: "same-origin",
+  });
+
+  let payload: LinkedLookupApiResponse | null = null;
+  try {
+    payload = (await response.json()) as LinkedLookupApiResponse;
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok && !payload?.error) {
+    throw new Error(`Linked record lookup failed (${response.status})`);
+  }
+
+  return payload ?? { records: [], error: "Unable to load linked records right now. Please try again." };
 }
