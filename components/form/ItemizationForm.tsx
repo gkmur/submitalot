@@ -8,6 +8,7 @@ import { FORM_DEFAULTS, SECTION_FIELD_MAP } from "@/lib/constants/form";
 import type { ItemizationFormData, FormFieldName, SectionId, LinkedRecord } from "@/lib/types";
 import { saveHistory, saveTemplate, buildCarryForwardValues, isStorageAvailable, type StoredSubmission, type LinkedRecordFieldName, type HistoryEntry, type Template } from "@/lib/storage";
 import { scrubOrphanedFields } from "@/lib/conditional-logic";
+import { SubmitRequestError, submitWithRetry } from "@/lib/client-submit";
 import { HistoryDrawer } from "./HistoryDrawer";
 
 import { FormStepper, type SectionDef } from "./FormStepper";
@@ -121,25 +122,13 @@ export function ItemizationForm() {
         idempotencyKeyRef.current = crypto.randomUUID();
       }
 
-      const res = await fetch("/api/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": idempotencyKeyRef.current,
-        },
-        body: JSON.stringify({
+      await submitWithRetry(
+        {
           formData: data,
           linkedRecords: linkedRecordsRef.current,
-        }),
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        if (res.status === 409 || res.status === 422) {
-          idempotencyKeyRef.current = null;
-        }
-        throw new Error(body.error || `Submission failed (${res.status})`);
-      }
+        },
+        idempotencyKeyRef.current
+      );
 
       const stored: StoredSubmission = {
         version: 1,
@@ -152,6 +141,12 @@ export function ItemizationForm() {
       setSubmitted(true);
       idempotencyKeyRef.current = null;
     } catch (err) {
+      if (
+        err instanceof SubmitRequestError &&
+        (err.status === 409 || err.status === 422)
+      ) {
+        idempotencyKeyRef.current = null;
+      }
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setSubmitting(false);

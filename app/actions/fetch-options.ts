@@ -6,6 +6,13 @@ import { LINKED_RECORD_FIELDS } from "@/lib/linked-records";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/request";
 import { shouldSample, trackTelemetry } from "@/lib/telemetry";
+import {
+  getLinkedSearchCache,
+  makeLinkedSearchCacheKey,
+  runLinkedSearchWithInflight,
+  setLinkedSearchCache,
+  type CachedLinkedRecord,
+} from "@/lib/linked-record-search-cache";
 
 const ALLOWED_CONFIGS = new Map(
   Object.values(LINKED_RECORD_FIELDS).map((cfg) => [cfg.table, cfg])
@@ -29,23 +36,6 @@ export async function searchLinkedRecords(
   const sample = shouldSample();
   const requestHeaders = await headers();
   const ip = getClientIp(requestHeaders);
-  const limit = await checkRateLimit(`search-linked:${ip}`, {
-    windowMs: SEARCH_WINDOW_MS,
-    max: SEARCH_MAX_REQUESTS,
-  });
-  if (!limit.allowed) {
-    if (sample) {
-      trackTelemetry(
-        "linked_search.rate_limited",
-        { ip, retryAfterMs: limit.retryAfterMs },
-        "warn"
-      );
-    }
-    return {
-      records: [],
-      error: "Too many linked record searches. Please wait a moment and try again.",
-    };
-  }
 
   const config = ALLOWED_CONFIGS.get(table);
   if (!config || config.displayField !== displayField) {
@@ -86,27 +76,60 @@ export async function searchLinkedRecords(
     : "";
 
   const allFields = [displayField, ...(extraFields ?? [])];
+  const sortConfig = sort ?? (config.sortField
+    ? { field: config.sortField, direction: config.sortDirection ?? "asc" }
+    : undefined);
 
-  try {
-    const records = await listRecords(table, {
-      fields: allFields,
-      maxRecords: 50,
-      filterFormula: filter || undefined,
-      sort: sort,
-    });
+  const cacheKey = makeLinkedSearchCacheKey({
+    table,
+    displayField,
+    query: sanitized,
+    extraFields,
+    sortField: sortConfig?.field,
+    sortDirection: sortConfig?.direction,
+  });
 
+  const cached = await getLinkedSearchCache(cacheKey);
+  if (cached) {
     if (sample) {
-      trackTelemetry("linked_search.success", {
+      trackTelemetry("linked_search.cache_hit", {
         ip,
         table,
         queryLength: query.length,
-        count: records.length,
+        count: cached.length,
         durationMs: Date.now() - startedAt,
       });
     }
+    return { records: cached };
+  }
 
+  const limit = await checkRateLimit(`search-linked:${ip}`, {
+    windowMs: SEARCH_WINDOW_MS,
+    max: SEARCH_MAX_REQUESTS,
+  });
+  if (!limit.allowed) {
+    if (sample) {
+      trackTelemetry(
+        "linked_search.rate_limited",
+        { ip, retryAfterMs: limit.retryAfterMs },
+        "warn"
+      );
+    }
     return {
-      records: records.map((r) => {
+      records: [],
+      error: "Too many linked record searches. Please wait a moment and try again.",
+    };
+  }
+
+  try {
+    const records = await runLinkedSearchWithInflight(cacheKey, async () => {
+      const airtableRecords = await listRecords(table, {
+        fields: allFields,
+        maxRecords: 50,
+        filterFormula: filter || undefined,
+        sort: sortConfig,
+      });
+      return airtableRecords.map((r): CachedLinkedRecord => {
         const metadata: Record<string, string> = {};
         if (extraFields) {
           for (const f of extraFields) {
@@ -119,8 +142,22 @@ export async function searchLinkedRecords(
           name: (r.fields[displayField] as string) ?? "",
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         };
-      }),
-    };
+      });
+    });
+
+    await setLinkedSearchCache(cacheKey, sanitized, records);
+
+    if (sample) {
+      trackTelemetry("linked_search.success", {
+        ip,
+        table,
+        queryLength: query.length,
+        count: records.length,
+        durationMs: Date.now() - startedAt,
+      });
+    }
+
+    return { records };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     if (sample) {
